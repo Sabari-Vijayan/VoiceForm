@@ -41,7 +41,10 @@ class GeminiService:
         lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
         T = lang_map.get(target_lang, target_lang)
 
-        sys = f"Translate JSON values to {T}. Keep keys, ids, types, labels same. Translate title, description, question_phrasing, options."
+        sys = (
+            f"Translate JSON values to {T}. Return ONLY raw JSON. "
+            "Keep keys, ids, types, labels same. Translate title, description, question_phrasing, options."
+        )
         
         try:
             response = self.client.models.generate_content(
@@ -49,9 +52,19 @@ class GeminiService:
                 contents=f"{sys}\nJSON: {json.dumps(schema)}",
                 config=types.GenerateContentConfig(response_mime_type="application/json")
             )
-            return json.loads(response.text)
+            
+            # Robust JSON extraction
+            text = response.text.strip()
+            if "```json" in text:
+                text = text.split("```json")[1].split("```")[0].strip()
+            elif "```" in text:
+                text = text.split("```")[1].split("```")[0].strip()
+                
+            return json.loads(text)
         except Exception as e:
             print(f"Fail: {e}")
+            # If JSON parsing fails due to "extra data", we could try a regex, 
+            # but usually cleaning markdown blocks solves 99% of cases.
             return schema
 
     async def extract_value(self, question: str, field_type: str, transcript: str, language: str, target_lang: str = 'en') -> Dict[str, Any]:
@@ -97,6 +110,25 @@ class GeminiService:
             return response.text.strip()
         except Exception as e:
             return text
+
+    async def translate_manual_responses(self, responses: Dict[str, Any], source_lang: str, target_lang: str = 'en') -> Dict[str, Any]:
+        """
+        Translates response values. Optimized for tokens.
+        """
+        lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
+        T = lang_map.get(target_lang, "English")
+
+        sys = f"Translate JSON values to {T}. Keep keys."
+
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=f"{sys}\nJSON: {json.dumps(responses)}",
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            return responses
 
 # Instantiate as a singleton
 gemini_service = GeminiService()
