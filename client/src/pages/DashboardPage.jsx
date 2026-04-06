@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Layout, MessageSquare, Clock, Loader2, Send, Eye, X, ChevronRight } from 'lucide-react';
+import { 
+  Plus, Layout, MessageSquare, Clock, Loader2, 
+  Send, Eye, X, ChevronRight, Settings, LogOut, 
+  Search, ExternalLink, Copy
+} from 'lucide-react';
 
 const DashboardPage = () => {
   const { user, logout } = useAuth();
@@ -15,24 +19,23 @@ const DashboardPage = () => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
-  useEffect(() => {
-    fetchForms();
-  }, [user]);
-
-  const fetchForms = async () => {
+  const fetchForms = React.useCallback(async () => {
     if (!user) return;
     try {
       const response = await fetch(`${backendUrl}/api/v1/creator/forms?creator_id=${user.id}`);
       if (!response.ok) throw new Error('Failed to fetch forms');
       const data = await response.json();
       setForms(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError('Could not load your forms.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, backendUrl]);
+
+  useEffect(() => {
+    fetchForms();
+  }, [fetchForms]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -56,7 +59,7 @@ const DashboardPage = () => {
       const newForm = await response.json();
       setForms([newForm, ...forms]);
       setPrompt('');
-    } catch (err) {
+    } catch {
       setError('AI generation failed. Please try again.');
     } finally {
       setGenerating(false);
@@ -70,113 +73,146 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="dashboard-container" style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <div>
-          <h2>Creator Dashboard</h2>
-          <p style={{ color: '#666' }}>Manage your voice forms and view responses.</p>
+    <div className="dashboard-layout" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-secondary)' }}>
+      {/* Sidebar */}
+      <aside className="mobile-hide" style={{ width: '260px', background: 'white', borderRight: '1px solid var(--border-subtle)', padding: '32px', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh' }}>
+        <div style={{ marginBottom: '48px' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.03em' }}>VoiceForm</h1>
         </div>
-        <button onClick={logout} style={{ backgroundColor: '#dc3545' }}>Logout</button>
-      </header>
-
-      {/* AI Generator Section */}
-      <section style={{ backgroundColor: '#f8f9fa', padding: '30px', borderRadius: '15px', marginBottom: '40px', border: '1px solid #e9ecef' }}>
-        <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Plus size={24} color="#007bff" /> Generate New Form with AI
-        </h3>
-        <p style={{ color: '#666', marginBottom: '20px' }}>Describe the form you want (e.g., "A coffee shop feedback form").</p>
-        <form onSubmit={handleGenerate} style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="text" 
-            placeholder="Describe your form..." 
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            disabled={generating}
-            style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ced4da' }}
-          />
-          <button type="submit" disabled={generating} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#007bff' }}>
-            {generating ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-            {generating ? 'Generating...' : 'Generate'}
+        
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button className="btn-secondary" style={{ justifyContent: 'flex-start', border: 'none', background: 'var(--accent-gray)', padding: '10px 16px' }}>
+            <Layout size={18} /> My Forms
           </button>
-        </form>
-        {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-      </section>
+          <button className="btn-secondary" style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '10px 16px', color: 'var(--text-secondary)' }}>
+            <Settings size={18} /> Settings
+          </button>
+        </nav>
 
-      {/* Forms List Section */}
-      <section>
-        <h3 style={{ marginBottom: '20px' }}>Your Forms</h3>
-        {loading ? (
-          <p>Loading forms...</p>
-        ) : forms.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', border: '2px dashed #ddd', borderRadius: '15px' }}>
-            <Layout size={48} color="#ccc" style={{ marginBottom: '15px' }} />
-            <p style={{ color: '#666' }}>No forms yet. Generate one above!</p>
+        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-subtle)', paddingTop: '24px' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px', wordBreak: 'break-all' }}>
+            {user?.email}
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {forms.map(form => (
-              <div key={form.id} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h4 style={{ margin: '0 0 10px 0' }}>{form.title}</h4>
-                    <button onClick={() => setSelectedForm(form)} style={{ padding: '4px', backgroundColor: 'transparent', color: '#666' }} title="Preview Fields">
-                        <Eye size={18} />
-                    </button>
-                </div>
-                <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '20px' }}>{form.description || 'No description'}</p>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', fontSize: '0.85rem', color: '#888', marginBottom: '20px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} /> {new Date().toLocaleDateString()}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MessageSquare size={14} /> 0 Responses</span>
-                </div>
+          <button onClick={logout} className="btn-secondary" style={{ width: '100%', fontSize: '0.9rem', padding: '8px' }}>
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
+      </aside>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
-                    onClick={() => copyLink(form.id)}
-                    style={{ flex: 1, padding: '8px', fontSize: '0.8rem', backgroundColor: '#6c757d' }}
-                  >
-                    Copy Link
-                  </button>
-                  <button 
-                    onClick={() => navigate(`/dashboard/responses/${form.id}`)}
-                    style={{ flex: 1, padding: '8px', fontSize: '0.8rem', backgroundColor: '#28a745' }}
-                  >
-                    Results
-                  </button>
-                </div>
+      {/* Main Content */}
+      <main className="mobile-full-width" style={{ marginLeft: '260px', flex: 1, padding: '64px 20px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          
+          <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+                <h2 style={{ fontSize: '2rem', marginBottom: '8px' }}>Dashboard</h2>
+                <p style={{ color: 'var(--text-secondary)' }}>Welcome back. Here's what's happening with your forms.</p>
+            </div>
+            <button onClick={logout} className="btn-secondary mobile-hide" style={{ border: 'none', color: 'var(--text-secondary)' }}>
+                <LogOut size={18} />
+            </button>
+          </header>
+
+          {/* AI Prompt Area */}
+          <section className="animate-fade-in mobile-padding-sm" style={{ background: 'white', border: '1px solid var(--border-strong)', padding: '40px', borderRadius: 'var(--radius-lg)', marginBottom: '64px', boxShadow: 'var(--shadow-md)' }}>
+            <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Plus size={20} strokeWidth={3} /> Create with AI
+            </h3>
+            <form onSubmit={handleGenerate} style={{ position: 'relative' }}>
+              <input 
+                className="input-minimal"
+                placeholder="Describe the form you want to build..." 
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                disabled={generating}
+                style={{ paddingRight: '140px', height: '56px' }}
+              />
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={generating || !prompt.trim()}
+                style={{ position: 'absolute', right: '6px', top: '6px', bottom: '6px', height: 'auto', padding: '0 24px' }}
+              >
+                {generating ? <Loader2 className="animate-spin" size={18} /> : 'Generate'}
+              </button>
+            </form>
+            {error && <p style={{ color: '#dc3545', marginTop: '16px', fontSize: '0.9rem' }}>{error}</p>}
+          </section>
+
+          {/* Forms List */}
+          <section>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3>Recent Forms</h3>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{forms.length} total</div>
+            </div>
+
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '64px' }}><Loader2 className="animate-spin" size={32} /></div>
+            ) : forms.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '80px', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-lg)' }}>
+                <p style={{ color: 'var(--text-secondary)' }}>No forms found. Start by generating one above.</p>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                {forms.map(form => (
+                  <div key={form.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '1.1rem' }}>{form.title}</h4>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={() => setSelectedForm(form)} style={{ padding: '8px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
+                                <Eye size={16} color="var(--text-secondary)" />
+                            </button>
+                            <button onClick={() => copyLink(form.id)} style={{ padding: '8px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
+                                <Copy size={16} color="var(--text-secondary)" />
+                            </button>
+                        </div>
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', flex: 1, marginBottom: '24px' }}>
+                      {form.description || 'No description provided.'}
+                    </p>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
+                      <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> {new Date().toLocaleDateString()}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MessageSquare size={14} /> 0 responses</span>
+                      </div>
+                      <button 
+                        onClick={() => navigate(`/dashboard/responses/${form.id}`)}
+                        className="btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                      >
+                        Analytics <ExternalLink size={14} style={{ marginLeft: '4px' }} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
 
       {/* Preview Modal */}
       {selectedForm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '15px', maxWidth: '500px', width: '90%', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
-                <button onClick={() => setSelectedForm(null)} style={{ position: 'absolute', top: '15px', right: '15px', backgroundColor: 'transparent', color: '#000' }}>
+        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
+            <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: 'var(--radius-lg)', maxWidth: '600px', width: '90%', maxHeight: '85vh', overflowY: 'auto', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+                <button onClick={() => setSelectedForm(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'transparent' }}>
                     <X size={24} />
                 </button>
-                <h3>Form Preview: {selectedForm.title}</h3>
-                <p style={{ color: '#666', marginBottom: '20px' }}>{selectedForm.description}</p>
+                <h3 style={{ fontSize: '1.5rem', marginBottom: '12px' }}>{selectedForm.title}</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>{selectedForm.description}</p>
                 
-                <div style={{ textAlign: 'left' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {selectedForm.fields?.map((field, idx) => (
-                        <div key={idx} style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-                            <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <ChevronRight size={14} color="#007bff" />
+                        <div key={idx} style={{ padding: '20px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)' }}>
+                            <div style={{ fontWeight: '600', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                <span style={{ background: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', border: '1px solid var(--border-strong)' }}>{idx + 1}</span>
                                 {field.question_phrasing}
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '5px' }}>
-                                Type: <span style={{ textTransform: 'uppercase' }}>{field.type}</span> 
-                                {field.required && ' • Required'}
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '12px', display: 'flex', gap: '12px' }}>
+                                <span style={{ background: 'white', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)' }}>{field.type.toUpperCase()}</span>
+                                {field.required && <span style={{ color: '#000', fontWeight: '600' }}>REQUIRED</span>}
                             </div>
-                            {field.options && (
-                                <div style={{ marginTop: '10px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                                    {field.options.map((opt, i) => (
-                                        <span key={i} style={{ fontSize: '0.75rem', backgroundColor: '#f1f3f5', padding: '2px 8px', borderRadius: '4px' }}>{opt}</span>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     ))}
                 </div>

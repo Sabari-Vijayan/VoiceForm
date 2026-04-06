@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mic, CheckCircle, Globe } from 'lucide-react';
+import { Mic, CheckCircle, Globe, ArrowRight, Layers, Zap } from 'lucide-react';
 
 const HomePage = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,40 +14,48 @@ const HomePage = () => {
   }, [user, navigate]);
 
   return (
-    <div className="home-container" style={{ textAlign: 'center', padding: '50px' }}>
-      <h1>VoiceForm</h1>
-      <p>The Multilingual Voice-First AI Form Platform</p>
-      
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', margin: '40px 0' }}>
-        <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '10px', width: '200px' }}>
-          <Mic size={40} color="#007bff" />
-          <h3>Voice Driven</h3>
-          <p>Talk naturally, we listen and extract data.</p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 20px', textAlign: 'center' }}>
+      <div className="animate-fade-in container" style={{ maxWidth: '800px' }}>
+        <div style={{ display: 'inline-flex', padding: '8px 16px', background: 'var(--bg-secondary)', borderRadius: '100px', fontSize: '0.85rem', fontWeight: '600', marginBottom: '24px', color: 'var(--text-secondary)' }}>
+            <Zap size={14} style={{ marginRight: '8px' }} /> NOW POWERED BY GEMINI 2.5 FLASH
         </div>
-        <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '10px', width: '200px' }}>
-          <Globe size={40} color="#28a745" />
-          <h3>Multilingual</h3>
-          <p>Speak in your native tongue (English, Hindi, etc).</p>
+        
+        <h1 style={{ lineHeight: '1', marginBottom: '24px', letterSpacing: '-0.05em' }}>
+            Forms that <span style={{ color: 'var(--text-secondary)' }}>listen.</span>
+        </h1>
+        
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.25rem', marginBottom: '48px', maxWidth: '600px', margin: '0 auto 48px', lineHeight: '1.5' }}>
+            Transform static forms into intelligent voice conversations. 
+            Break language barriers and collect data at the speed of speech.
+        </p>
+
+        <div className="mobile-stack" style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '80px' }}>
+            <Link to="/register" className="btn-primary mobile-full-width" style={{ height: '56px', padding: '0 32px', fontSize: '1.1rem', textDecoration: 'none' }}>
+                Get Started for Free
+            </Link>
+            <Link to="/login" className="btn-secondary mobile-full-width" style={{ height: '56px', padding: '0 32px', fontSize: '1.1rem', textDecoration: 'none' }}>
+                Sign In
+            </Link>
         </div>
-        <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '10px', width: '200px' }}>
-          <CheckCircle size={40} color="#ffc107" />
-          <h3>AI Extraction</h3>
-          <p>Zero manual typing for respondents.</p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', textAlign: 'left' }}>
+            <div className="card" style={{ padding: '32px' }}>
+                <Mic size={24} style={{ marginBottom: '16px' }} />
+                <h3 style={{ marginBottom: '8px' }}>Voice First</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Natural dialogue extraction with zero manual typing required.</p>
+            </div>
+            <div className="card" style={{ padding: '32px' }}>
+                <Globe size={24} style={{ marginBottom: '16px' }} />
+                <h3 style={{ marginBottom: '8px' }}>Multilingual</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Real-time translation across 50+ languages instantly.</p>
+            </div>
+            <div className="card" style={{ padding: '32px' }}>
+                <Layers size={24} style={{ marginBottom: '16px' }} />
+                <h3 style={{ marginBottom: '8px' }}>Structured Data</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>AI-driven normalization directly into your existing database.</p>
+            </div>
         </div>
       </div>
-
-      {user ? (
-        <div>
-          <p>Welcome, {user.email}!</p>
-          <Link to="/dashboard" style={{ marginRight: '10px' }}>Go to Dashboard</Link>
-          <button onClick={logout}>Logout</button>
-        </div>
-      ) : (
-        <div>
-          <Link to="/login" style={{ marginRight: '10px' }}>Login</Link>
-          <Link to="/register">Register</Link>
-        </div>
-      )}
     </div>
   );
 };

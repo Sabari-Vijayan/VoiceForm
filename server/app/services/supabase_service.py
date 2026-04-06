@@ -71,17 +71,21 @@ class SupabaseService:
         """
         try:
             # Fetch form
-            form_response = self.client.table("forms").select("*").eq("id", form_id).eq("is_public", True).single().execute()
-            if not form_response.data:
+            response = self.client.table("forms").select("*").eq("id", form_id).eq("is_public", True).execute()
+            
+            if not response.data:
+                print(f"Form {form_id} not found or is private")
                 raise Exception("Form not found or is private")
+            
+            form = response.data[0]
             
             # Fetch fields
             fields_response = self.client.table("form_fields").select("*").eq("form_id", form_id).order("order_index").execute()
             
-            return {
-                **form_response.data,
-                "fields": fields_response.data
-            }
+            # Merge fields into form
+            form["fields"] = fields_response.data if fields_response.data else []
+            
+            return form
         except Exception as e:
             print(f"Error fetching public form: {e}")
             raise e

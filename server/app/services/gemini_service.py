@@ -43,7 +43,7 @@ class GeminiService:
         lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
         target_name = lang_map.get(target_lang, target_lang)
 
-        print(f"Translating form {schema.get('id')} to {target_name}...")
+        print(f"Translating form '{schema.get('title')}' to {target_name}...")
 
         system_instruction = (
             f"You are a translation expert. Your task is to translate the provided form schema JSON into '{target_name}'.\n"
@@ -63,11 +63,12 @@ class GeminiService:
                     response_mime_type="application/json"
                 )
             )
+            print(f"Gemini Raw Response: {response.text[:200]}...")
             translated = json.loads(response.text)
             print(f"Translation successful for {target_name}")
             return translated
         except Exception as e:
-            print(f"Translation FAILED: {e}")
+            print(f"Translation FAILED: {str(e)}")
             return schema
 
     async def extract_value(self, question: str, field_type: str, transcript: str, language: str) -> Dict[str, Any]:

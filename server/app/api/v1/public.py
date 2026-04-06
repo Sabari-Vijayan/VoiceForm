@@ -13,14 +13,16 @@ async def get_public_form(form_id: str, lang: str = "en"):
     try:
         # 1. Fetch the original form from DB
         form = await supabase_service.get_public_form(form_id)
+        print(f"Fetched form: {form.get('title')} (Creator Lang: {form.get('creator_language')})")
         
         # 2. If a different language is requested, translate the schema
-        # We check against 'en' OR the creator's language to avoid redundant translations
         if lang and lang != "en" and lang != form.get("creator_language"):
-            print(f"Requesting translation to {lang}")
+            print(f"ACTUALLY Requesting translation to: {lang}")
             translated_form = await gemini_service.translate_form(form, lang)
+            print(f"Returning translated form: {translated_form.get('title')}")
             return translated_form
             
+        print("Returning original form (no translation needed)")
         return form
     except Exception as e:
         print(f"Error in get_public_form: {e}")
