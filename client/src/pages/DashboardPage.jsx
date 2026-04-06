@@ -66,10 +66,13 @@ const DashboardPage = () => {
     }
   };
 
+  const [copyingId, setCopyingId] = useState(null);
+
   const copyLink = (id) => {
     const link = `${window.location.origin}/f/${id}`;
     navigator.clipboard.writeText(link);
-    alert('Public form link copied to clipboard!');
+    setCopyingId(id);
+    setTimeout(() => setCopyingId(null), 2000);
   };
 
   return (
@@ -162,8 +165,8 @@ const DashboardPage = () => {
                             <button onClick={() => setSelectedForm(form)} style={{ padding: '8px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
                                 <Eye size={16} color="var(--text-secondary)" />
                             </button>
-                            <button onClick={() => copyLink(form.id)} style={{ padding: '8px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                                <Copy size={16} color="var(--text-secondary)" />
+                            <button onClick={() => copyLink(form.id)} style={{ padding: '8px', background: copyingId === form.id ? '#e6fffa' : 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', transition: 'all 0.2s' }}>
+                                {copyingId === form.id ? <CheckCircle2 size={16} color="#38b2ac" /> : <Copy size={16} color="var(--text-secondary)" />}
                             </button>
                         </div>
                     </div>
@@ -194,15 +197,22 @@ const DashboardPage = () => {
 
       {/* Preview Modal */}
       {selectedForm && (
-        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-            <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: 'var(--radius-lg)', maxWidth: '600px', width: '90%', maxHeight: '85vh', overflowY: 'auto', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+        <div 
+          className="animate-fade-in" 
+          onClick={() => setSelectedForm(null)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}
+        >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              style={{ backgroundColor: 'white', padding: '40px', borderRadius: 'var(--radius-lg)', maxWidth: '600px', width: '90%', maxHeight: '85vh', overflowY: 'auto', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+            >
                 <button onClick={() => setSelectedForm(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'transparent' }}>
                     <X size={24} />
                 </button>
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '12px' }}>{selectedForm.title}</h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>{selectedForm.description}</p>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
                     {selectedForm.fields?.map((field, idx) => (
                         <div key={idx} style={{ padding: '20px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)' }}>
                             <div style={{ fontWeight: '600', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -215,6 +225,12 @@ const DashboardPage = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button onClick={() => setSelectedForm(null)} className="btn-secondary" style={{ padding: '8px 24px' }}>
+                        Close Preview
+                    </button>
                 </div>
             </div>
         </div>

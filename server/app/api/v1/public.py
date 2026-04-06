@@ -1,9 +1,20 @@
 from fastapi import APIRouter, HTTPException
-from app.models.schemas import ExtractionRequest, ExtractionResponse, FormSchemaWithFields, SessionCreateRequest, SessionResponse
+from app.models.schemas import ExtractionRequest, ExtractionResponse, FormSchemaWithFields, SessionCreateRequest, SessionResponse, BulkResponseSubmit
 from app.services.gemini_service import gemini_service
 from app.services.supabase_service import supabase_service
 
 router = APIRouter()
+
+@router.post("/forms/{form_id}/submit")
+async def submit_manual_responses(form_id: str, request: BulkResponseSubmit):
+    """
+    Save bulk manual responses.
+    """
+    try:
+        result = await supabase_service.submit_bulk_manual_responses(form_id, request.dict())
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/forms/{form_id}", response_model=FormSchemaWithFields)
 async def get_public_form(form_id: str, lang: str = "en"):

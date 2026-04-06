@@ -38,6 +38,10 @@ class ExtractionResponse(BaseModel):
     confidence: float
     ambiguous: bool
 
+class BulkResponseSubmit(BaseModel):
+    respondent_language: str
+    responses: Dict[str, Any] # field_id -> value
+
 class FormFieldSchema(BaseModel):
     id: Optional[str] = None # Added for DB response
     form_id: Optional[str] = None # Added for DB response
@@ -54,3 +58,27 @@ class FormSchemaResponse(BaseModel):
     title: str
     description: Optional[str] = None
     fields: List[FormFieldSchema]
+
+class ResponseValue(BaseModel):
+    field_id: str
+    label: str
+    value: Any
+    confidence: float
+    raw_transcript: Optional[str] = None
+
+class SessionAnalytics(BaseModel):
+    id: str
+    respondent_language: str
+    status: str
+    started_at: Any
+    completed_at: Optional[Any] = None
+    responses: List[ResponseValue]
+
+class AnalyticsResponse(BaseModel):
+    total_sessions: int
+    completed_sessions: int
+    completion_rate: float
+    average_confidence: float
+    responses_by_language: Dict[str, int]
+    sessions: List[SessionAnalytics]
+    form: FormSchemaWithFields

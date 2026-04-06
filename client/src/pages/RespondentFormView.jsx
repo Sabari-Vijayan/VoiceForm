@@ -39,6 +39,12 @@ const RespondentFormView = () => {
   }, [fetchForm]);
 
   const handleStartSession = async (targetMode) => {
+    // For manual mode, we don't start a DB session until the user actually submits.
+    if (targetMode === 'manual') {
+        setMode('manual');
+        return;
+    }
+
     setStarting(true);
     try {
       const response = await fetch(`${backendUrl}/api/v1/public/sessions`, {
@@ -63,11 +69,24 @@ const RespondentFormView = () => {
   const handleManualSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    // Simulating API call for now
-    setTimeout(() => {
-        setMode('completed');
-        setSubmitting(false);
-    }, 1500);
+    
+    try {
+      const response = await fetch(`${backendUrl}/api/v1/public/forms/${formId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          respondent_language: language,
+          responses: manualData
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to submit form');
+      setMode('completed');
+    } catch {
+      alert('Could not submit form. Please check your connection.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={48} color="var(--accent-black)" /></div>;
@@ -84,13 +103,13 @@ const RespondentFormView = () => {
   if (mode === 'completed') {
       return (
           <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-              <div className="animate-fade-in" style={{ maxWidth: '500px', textAlign: 'center' }}>
+              <div className="animate-fade-in container" style={{ maxWidth: '500px', textAlign: 'center' }}>
                   <div style={{ background: 'var(--bg-secondary)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
                     <CheckCircle2 size={40} color="#000" />
                   </div>
-                  <h2 style={{ fontSize: '2rem', marginBottom: '12px' }}>All set.</h2>
+                  <h1>All set.</h1>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '40px' }}>Thank you for your time. Your responses have been securely recorded.</p>
-                  <button onClick={() => window.location.reload()} className="btn-primary" style={{ width: '100%' }}>Return to Start</button>
+                  <button onClick={() => window.location.reload()} className="btn-primary mobile-full-width" style={{ width: '100%' }}>Return to Start</button>
               </div>
           </div>
       );
@@ -100,8 +119,8 @@ const RespondentFormView = () => {
   if (mode === 'voice') {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', padding: '20px', background: '#000', color: '#fff' }}>
-        <div className="animate-fade-in" style={{ maxWidth: '600px', textAlign: 'center', width: '100%' }}>
-            <div style={{ marginBottom: '64px' }}>
+        <div className="animate-fade-in container" style={{ maxWidth: '600px', textAlign: 'center', width: '100%' }}>
+            <div style={{ marginBottom: '48px' }}>
                 <div className="voice-wave">
                     <div className="voice-bar" style={{ background: '#fff' }}></div>
                     <div className="voice-bar" style={{ background: '#fff' }}></div>
@@ -111,10 +130,10 @@ const RespondentFormView = () => {
                 </div>
             </div>
             
-            <h2 style={{ fontSize: '2.5rem', fontWeight: '500', marginBottom: '24px', lineHeight: '1.2' }}>Listening...</h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.2rem', marginBottom: '80px' }}>Please speak naturally in {language.toUpperCase()}</p>
+            <h2 style={{ fontWeight: '500', marginBottom: '24px', lineHeight: '1.2' }}>Listening...</h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.2rem', marginBottom: '64px' }}>Please speak naturally in {language.toUpperCase()}</p>
             
-            <button onClick={() => setMode('manual')} style={{ background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 24px', borderRadius: 'var(--radius-md)' }}>
+            <button onClick={() => setMode('manual')} className="mobile-full-width" style={{ background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 24px', borderRadius: 'var(--radius-md)' }}>
                 Switch to Typing
             </button>
         </div>
@@ -125,20 +144,20 @@ const RespondentFormView = () => {
   // --- MANUAL MODE ---
   if (mode === 'manual') {
       return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)', padding: '64px 20px' }}>
-            <div className="animate-fade-in" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <div className="mobile-padding-sm" style={{ minHeight: '100vh', background: 'var(--bg-secondary)', padding: '64px 20px' }}>
+            <div className="animate-fade-in container" style={{ maxWidth: '600px', margin: '0 auto', padding: 0 }}>
                 <button onClick={() => setMode('selection')} style={{ background: 'transparent', color: 'var(--text-secondary)', marginBottom: '32px', padding: 0 }}>
                     <ChevronLeft size={18} /> Back to selection
                 </button>
                 
                 <header style={{ marginBottom: '48px' }}>
-                    <h1 style={{ fontSize: '2.5rem', marginBottom: '12px' }}>{form.title}</h1>
+                    <h1 style={{ marginBottom: '12px' }}>{form.title}</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{form.description}</p>
                 </header>
                 
                 <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                     {form.fields.map((field) => (
-                        <div key={field.id} className="card" style={{ padding: '32px', boxShadow: 'var(--shadow-sm)' }}>
+                        <div key={field.id} className="card mobile-padding-sm" style={{ padding: '32px', boxShadow: 'var(--shadow-sm)' }}>
                             <label style={{ display: 'block', fontWeight: '600', fontSize: '1.1rem', marginBottom: '20px' }}>
                                 {field.question_phrasing} {field.required && <span style={{ color: '#ff4444' }}>*</span>}
                             </label>

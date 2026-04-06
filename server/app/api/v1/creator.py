@@ -1,10 +1,21 @@
 from fastapi import APIRouter, HTTPException, Query
-from app.models.schemas import FormGenerationRequest, FormSchemaResponse, FormListResponse
+from app.models.schemas import FormGenerationRequest, FormSchemaResponse, FormListResponse, AnalyticsResponse
 from app.services.gemini_service import gemini_service
 from app.services.supabase_service import supabase_service
 from typing import List
 
 router = APIRouter()
+
+@router.get("/forms/{form_id}/analytics", response_model=AnalyticsResponse)
+async def get_form_analytics(form_id: str):
+    """
+    Retrieve comprehensive analytics and responses for a specific form.
+    """
+    try:
+        analytics = await supabase_service.get_form_analytics(form_id)
+        return analytics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate", response_model=FormSchemaResponse)
 async def generate_form(request: FormGenerationRequest):

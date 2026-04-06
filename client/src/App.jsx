@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ResponsesPage from './pages/ResponsesPage';
 import RespondentFormView from './pages/RespondentFormView';
 import './App.css';
 
@@ -30,6 +31,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/responses/:formId" 
+              element={
+                <ProtectedRoute>
+                  <ResponsesPage />
                 </ProtectedRoute>
               } 
             />
