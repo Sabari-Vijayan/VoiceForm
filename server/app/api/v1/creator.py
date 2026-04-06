@@ -23,13 +23,21 @@ async def generate_form(request: FormGenerationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/forms", response_model=List[FormListResponse])
+@router.get("/forms", response_model=List[FormSchemaResponse])
 async def get_creator_forms(creator_id: str = Query(..., description="The user ID of the creator")):
     """
-    Retrieve all forms created by a specific user.
+    Retrieve all forms (with fields) created by a specific user.
     """
     try:
+        # We'll use a slightly different approach to get forms + fields
+        # In a real app, a join or dedicated RPC would be better, but we'll fetch them individually for now
         forms = await supabase_service.get_forms(creator_id)
-        return forms
+        
+        full_forms = []
+        for f in forms:
+            full_form = await supabase_service.get_public_form(f["id"])
+            full_forms.append(full_form)
+            
+        return full_forms
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import RespondentFormView from './pages/RespondentFormView';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/f/:formId" element={<RespondentFormView />} />
             <Route 
               path="/dashboard" 
               element={

@@ -1,8 +1,45 @@
 from fastapi import APIRouter, HTTPException
-from app.models.schemas import ExtractionRequest, ExtractionResponse
+from app.models.schemas import ExtractionRequest, ExtractionResponse, FormSchemaWithFields, SessionCreateRequest, SessionResponse
 from app.services.gemini_service import gemini_service
+from app.services.supabase_service import supabase_service
 
 router = APIRouter()
+
+@router.get("/forms/{form_id}", response_model=FormSchemaWithFields)
+async def get_public_form(form_id: str, lang: str = "en"):
+    """
+    Retrieve a public form and its fields, optionally translated.
+    """
+    try:
+        # 1. Fetch the original form from DB
+        form = await supabase_service.get_public_form(form_id)
+        
+        # 2. If a different language is requested, translate the schema
+        # We check against 'en' OR the creator's language to avoid redundant translations
+        if lang and lang != "en" and lang != form.get("creator_language"):
+            print(f"Requesting translation to {lang}")
+            translated_form = await gemini_service.translate_form(form, lang)
+            return translated_form
+            
+        return form
+    except Exception as e:
+        print(f"Error in get_public_form: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.post("/sessions", response_model=SessionResponse)
+async def start_session(request: SessionCreateRequest):
+    """
+    Start a new voice session for a form.
+    """
+    try:
+        session = await supabase_service.create_session(request.form_id, request.respondent_language)
+        return {
+            "session_id": session["id"],
+            "form_id": session["form_id"],
+            "respondent_language": session["respondent_language"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/extract", response_model=ExtractionResponse)
 async def extract_value(request: ExtractionRequest):

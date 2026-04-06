@@ -5,11 +5,27 @@ class FormGenerationRequest(BaseModel):
     prompt: str
     creator_id: str # We need to know who is creating the form
 
+class SessionCreateRequest(BaseModel):
+    form_id: str
+    respondent_language: str
+
+class SessionResponse(BaseModel):
+    session_id: str
+    form_id: str
+    respondent_language: str
+
 class FormListResponse(BaseModel):
     id: str
     title: str
     description: Optional[str] = None
-    created_at: str
+    created_at: Any # Using Any to handle datetime objects from Supabase
+
+class FormSchemaWithFields(BaseModel):
+    id: str
+    title: str
+    description: Optional[str] = None
+    creator_language: str
+    fields: List[FormFieldSchema]
 
 class ExtractionRequest(BaseModel):
     question: str

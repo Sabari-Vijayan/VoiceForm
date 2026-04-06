@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Layout, MessageSquare, Clock, Loader2, Send } from 'lucide-react';
+import { Plus, Layout, MessageSquare, Clock, Loader2, Send, Eye, X, ChevronRight } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user, logout } = useAuth();
@@ -11,6 +11,7 @@ const DashboardPage = () => {
   const [generating, setGenerating] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [error, setError] = useState('');
+  const [selectedForm, setSelectedForm] = useState(null);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
@@ -55,7 +56,6 @@ const DashboardPage = () => {
       const newForm = await response.json();
       setForms([newForm, ...forms]);
       setPrompt('');
-      // Optionally navigate to a detail view or stay on dashboard
     } catch (err) {
       setError('AI generation failed. Please try again.');
     } finally {
@@ -84,7 +84,7 @@ const DashboardPage = () => {
         <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Plus size={24} color="#007bff" /> Generate New Form with AI
         </h3>
-        <p style={{ color: '#666', marginBottom: '20px' }}>Describe the form you want (e.g., "A customer satisfaction survey for a pizza delivery service with rating and feedback").</p>
+        <p style={{ color: '#666', marginBottom: '20px' }}>Describe the form you want (e.g., "A coffee shop feedback form").</p>
         <form onSubmit={handleGenerate} style={{ display: 'flex', gap: '10px' }}>
           <input 
             type="text" 
@@ -110,17 +110,22 @@ const DashboardPage = () => {
         ) : forms.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', border: '2px dashed #ddd', borderRadius: '15px' }}>
             <Layout size={48} color="#ccc" style={{ marginBottom: '15px' }} />
-            <p style={{ color: '#666' }}>No forms yet. Use the AI generator above to create your first one!</p>
+            <p style={{ color: '#666' }}>No forms yet. Generate one above!</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {forms.map(form => (
-              <div key={form.id} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '12px', position: 'relative' }}>
-                <h4 style={{ margin: '0 0 10px 0' }}>{form.title}</h4>
+              <div key={form.id} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <h4 style={{ margin: '0 0 10px 0' }}>{form.title}</h4>
+                    <button onClick={() => setSelectedForm(form)} style={{ padding: '4px', backgroundColor: 'transparent', color: '#666' }} title="Preview Fields">
+                        <Eye size={18} />
+                    </button>
+                </div>
                 <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '20px' }}>{form.description || 'No description'}</p>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', fontSize: '0.85rem', color: '#888', marginBottom: '20px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} /> {new Date(form.created_at).toLocaleDateString()}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14} /> {new Date().toLocaleDateString()}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MessageSquare size={14} /> 0 Responses</span>
                 </div>
 
@@ -135,7 +140,7 @@ const DashboardPage = () => {
                     onClick={() => navigate(`/dashboard/responses/${form.id}`)}
                     style={{ flex: 1, padding: '8px', fontSize: '0.8rem', backgroundColor: '#28a745' }}
                   >
-                    View Results
+                    Results
                   </button>
                 </div>
               </div>
@@ -143,6 +148,41 @@ const DashboardPage = () => {
           </div>
         )}
       </section>
+
+      {/* Preview Modal */}
+      {selectedForm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '15px', maxWidth: '500px', width: '90%', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
+                <button onClick={() => setSelectedForm(null)} style={{ position: 'absolute', top: '15px', right: '15px', backgroundColor: 'transparent', color: '#000' }}>
+                    <X size={24} />
+                </button>
+                <h3>Form Preview: {selectedForm.title}</h3>
+                <p style={{ color: '#666', marginBottom: '20px' }}>{selectedForm.description}</p>
+                
+                <div style={{ textAlign: 'left' }}>
+                    {selectedForm.fields?.map((field, idx) => (
+                        <div key={idx} style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
+                            <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <ChevronRight size={14} color="#007bff" />
+                                {field.question_phrasing}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '5px' }}>
+                                Type: <span style={{ textTransform: 'uppercase' }}>{field.type}</span> 
+                                {field.required && ' • Required'}
+                            </div>
+                            {field.options && (
+                                <div style={{ marginTop: '10px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                    {field.options.map((opt, i) => (
+                                        <span key={i} style={{ fontSize: '0.75rem', backgroundColor: '#f1f3f5', padding: '2px 8px', borderRadius: '4px' }}>{opt}</span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

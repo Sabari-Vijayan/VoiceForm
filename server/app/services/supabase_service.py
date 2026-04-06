@@ -72,6 +72,8 @@ class SupabaseService:
         try:
             # Fetch form
             form_response = self.client.table("forms").select("*").eq("id", form_id).eq("is_public", True).single().execute()
+            if not form_response.data:
+                raise Exception("Form not found or is private")
             
             # Fetch fields
             fields_response = self.client.table("form_fields").select("*").eq("form_id", form_id).order("order_index").execute()
@@ -82,6 +84,43 @@ class SupabaseService:
             }
         except Exception as e:
             print(f"Error fetching public form: {e}")
+            raise e
+
+    async def create_session(self, form_id: str, language: str) -> Dict[str, Any]:
+        """
+        Creates a new session for a respondent.
+        """
+        try:
+            session_data = {
+                "form_id": form_id,
+                "respondent_language": language,
+                "status": "in_progress"
+            }
+            response = self.client.table("sessions").insert(session_data).execute()
+            if not response.data:
+                raise Exception("Failed to create session")
+            return response.data[0]
+        except Exception as e:
+            print(f"Error creating session: {e}")
+            raise e
+
+    async def save_response(self, session_id: str, field_id: str, result: Dict[str, Any], transcript: str) -> Dict[str, Any]:
+        """
+        Saves a single question's extracted response.
+        """
+        try:
+            response_data = {
+                "session_id": session_id,
+                "field_id": field_id,
+                "raw_transcript": transcript,
+                "extracted_value": result.get("value"),
+                "confidence": result.get("confidence", 0.0),
+                "attempts": 1
+            }
+            response = self.client.table("responses").insert(response_data).execute()
+            return response.data[0]
+        except Exception as e:
+            print(f"Error saving response: {e}")
             raise e
 
 # Instantiate as singleton
