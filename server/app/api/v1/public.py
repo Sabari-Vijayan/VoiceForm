@@ -17,23 +17,25 @@ async def submit_manual_responses(form_id: str, request: BulkResponseSubmit):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/forms/{form_id}", response_model=FormSchemaWithFields)
-async def get_public_form(form_id: str, lang: str = "en"):
+async def get_public_form(form_id: str, lang: str = None):
     """
     Retrieve a public form and its fields, optionally translated.
+    If lang is not provided, it returns the form in its original language.
     """
     try:
         # 1. Fetch the original form from DB
         form = await supabase_service.get_public_form(form_id)
-        print(f"Fetched form: {form.get('title')} (Creator Lang: {form.get('creator_language')})")
+        creator_lang = form.get("creator_language", "en")
+        print(f"Fetched form: {form.get('title')} (Creator Lang: {creator_lang})")
         
         # 2. If a different language is requested, translate the schema
-        if lang and lang != "en" and lang != form.get("creator_language"):
-            print(f"ACTUALLY Requesting translation to: {lang}")
+        if lang and lang != creator_lang:
+            print(f"ACTUALLY Requesting translation from {creator_lang} to: {lang}")
             translated_form = await gemini_service.translate_form(form, lang)
             print(f"Returning translated form: {translated_form.get('title')}")
             return translated_form
             
-        print("Returning original form (no translation needed)")
+        print(f"Returning original form in {creator_lang}")
         return form
     except Exception as e:
         print(f"Error in get_public_form: {e}")
@@ -58,14 +60,31 @@ async def start_session(request: SessionCreateRequest):
 async def extract_value(request: ExtractionRequest):
     """
     Extract a structured value from a voice transcript.
+    Normalizes the value to the creator's language.
     """
     try:
+        # Fetch form to get creator_language
+        form = await supabase_service.get_public_form(request.form_id)
+        target_lang = form.get("creator_language", "en")
+        
         result = await gemini_service.extract_value(
             question=request.question,
             field_type=request.field_type,
             transcript=request.transcript,
-            language=request.language
+            language=request.language,
+            target_lang=target_lang
         )
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/translate")
+async def translate_text(text: str, target_lang: str):
+    """
+    Translate simple text.
+    """
+    try:
+        translated = await gemini_service.translate_text(text, target_lang)
+        return {"translated": translated}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

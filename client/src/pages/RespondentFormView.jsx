@@ -10,7 +10,7 @@ const RespondentFormView = () => {
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(null);
   const [_session, setSession] = useState(null);
   const [starting, setStarting] = useState(false);
   
@@ -18,19 +18,33 @@ const RespondentFormView = () => {
   const [mode, setMode] = useState('selection');
   const [manualData, setManualData] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
   const fetchForm = React.useCallback(async () => {
+    // Only set full loading for first fetch
+    setIsTranslating(true);
+    
     try {
-      const response = await fetch(`${backendUrl}/api/v1/public/forms/${formId}?lang=${language}`);
+      const url = language 
+        ? `${backendUrl}/api/v1/public/forms/${formId}?lang=${language}`
+        : `${backendUrl}/api/v1/public/forms/${formId}`;
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Form not found');
       const data = await response.json();
+      
       setForm(data);
+      // If language was not set, initialize it from creator_language
+      if (!language) {
+          setLanguage(data.creator_language);
+      }
     } catch {
       setError('This form is not available or does not exist.');
     } finally {
       setLoading(false);
+      setIsTranslating(false);
     }
   }, [formId, language, backendUrl]);
 
@@ -216,20 +230,25 @@ const RespondentFormView = () => {
         <h1 style={{ lineHeight: '1.1', marginBottom: '16px', letterSpacing: '-0.04em' }}>{form.title}</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.25rem', marginBottom: '48px', lineHeight: '1.5' }}>{form.description}</p>
         
-        <div style={{ background: 'var(--bg-secondary)', padding: '32px', borderRadius: 'var(--radius-lg)', marginBottom: '48px', textAlign: 'left' }}>
+        <div style={{ background: 'var(--bg-secondary)', padding: '32px', borderRadius: 'var(--radius-lg)', marginBottom: '48px', textAlign: 'left', position: 'relative' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontWeight: '600', fontSize: '0.9rem' }}>
                 <Globe size={16} /> PREFERRED LANGUAGE
+                {isTranslating && <Loader2 size={14} className="animate-spin" style={{ marginLeft: 'auto' }} />}
             </label>
             <select 
                 className="input-minimal"
-                value={language} 
+                value={language || ''} 
                 onChange={(e) => setLanguage(e.target.value)}
-                style={{ border: '1px solid var(--border-strong)' }}
+                style={{ border: '1px solid var(--border-strong)', opacity: isTranslating ? 0.6 : 1 }}
+                disabled={isTranslating}
             >
                 <option value="en">English</option>
                 <option value="hi">Hindi (हिंदी)</option>
                 <option value="ml">Malayalam (മലയാളം)</option>
                 <option value="es">Spanish (Español)</option>
+                {language && !['en', 'hi', 'ml', 'es'].includes(language) && (
+                    <option value={language}>{language.toUpperCase()}</option>
+                )}
             </select>
         </div>
 

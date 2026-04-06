@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Layout, MessageSquare, Clock, Loader2, 
   Send, Eye, X, ChevronRight, Settings, LogOut, 
-  Search, ExternalLink, Copy
+  Search, ExternalLink, Copy, CheckCircle2
 } from 'lucide-react';
 
 const DashboardPage = () => {
@@ -14,6 +14,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [prompt, setPrompt] = useState('');
+  const [formLanguage, setFormLanguage] = useState('en');
   const [error, setError] = useState('');
   const [selectedForm, setSelectedForm] = useState(null);
 
@@ -50,7 +51,8 @@ const DashboardPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: prompt,
-          creator_id: user.id
+          creator_id: user.id,
+          language: formLanguage
         })
       });
 
@@ -118,9 +120,24 @@ const DashboardPage = () => {
 
           {/* AI Prompt Area */}
           <section className="animate-fade-in mobile-padding-sm" style={{ background: 'white', border: '1px solid var(--border-strong)', padding: '40px', borderRadius: 'var(--radius-lg)', marginBottom: '64px', boxShadow: 'var(--shadow-md)' }}>
-            <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Plus size={20} strokeWidth={3} /> Create with AI
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 0 }}>
+                    <Plus size={20} strokeWidth={3} /> Create with AI
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)' }}>LANGUAGE:</span>
+                    <select 
+                        value={formLanguage}
+                        onChange={(e) => setFormLanguage(e.target.value)}
+                        style={{ border: '1px solid var(--border-subtle)', padding: '4px 12px', borderRadius: '100px', fontSize: '0.85rem', outline: 'none' }}
+                    >
+                        <option value="en">English</option>
+                        <option value="hi">Hindi (हिंदी)</option>
+                        <option value="ml">Malayalam (മലയാളം)</option>
+                        <option value="es">Spanish (Español)</option>
+                    </select>
+                </div>
+            </div>
             <form onSubmit={handleGenerate} style={{ position: 'relative' }}>
               <input 
                 className="input-minimal"

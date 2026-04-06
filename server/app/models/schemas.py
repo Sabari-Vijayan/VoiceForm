@@ -3,7 +3,8 @@ from typing import List, Optional, Any, Dict
 
 class FormGenerationRequest(BaseModel):
     prompt: str
-    creator_id: str # We need to know who is creating the form
+    creator_id: str
+    language: Optional[str] = 'en'
 
 class SessionCreateRequest(BaseModel):
     form_id: str
@@ -28,6 +29,7 @@ class FormSchemaWithFields(BaseModel):
     fields: List[FormFieldSchema]
 
 class ExtractionRequest(BaseModel):
+    form_id: str
     question: str
     field_type: str
     transcript: str
@@ -35,6 +37,7 @@ class ExtractionRequest(BaseModel):
 
 class ExtractionResponse(BaseModel):
     value: Any
+    raw_value: Any
     confidence: float
     ambiguous: bool
 

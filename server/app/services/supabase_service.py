@@ -5,7 +5,7 @@ class SupabaseService:
     def __init__(self):
         self.client = supabase_client
 
-    async def create_form(self, creator_id: str, schema: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_form(self, creator_id: str, schema: Dict[str, Any], language: str = 'en') -> Dict[str, Any]:
         """
         Saves a generated form and its fields to Supabase.
         """
@@ -15,7 +15,7 @@ class SupabaseService:
                 "creator_id": creator_id,
                 "title": schema.get("title"),
                 "description": schema.get("description", ""),
-                "creator_language": "en" # Defaulting for MVP
+                "creator_language": language
             }
             
             form_response = self.client.table("forms").insert(form_data).execute()
@@ -130,29 +130,45 @@ class SupabaseService:
     async def submit_bulk_manual_responses(self, form_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Creates a session and multiple responses in one go for manual submissions.
-        Only marks as 'completed' if data is actually submitted.
+        Translates values to creator's language if the respondent language is different.
         """
         try:
-            # 1. Create session
-            session = await self.create_session(form_id, data.get("respondent_language", "en"))
+            # 1. Fetch form to get creator_language
+            form = await self.get_public_form(form_id)
+            creator_lang = form.get("creator_language", "en")
+            
+            # 2. Get original responses
+            raw_responses = data.get("responses", {})
+            resp_lang = data.get("respondent_language", "en")
+            
+            # 3. Translate to creator's language if needed
+            if resp_lang != creator_lang and raw_responses:
+                print(f"Translating manual responses from {resp_lang} to {creator_lang}...")
+                from app.services.gemini_service import gemini_service
+                translated_responses = await gemini_service.translate_manual_responses(raw_responses, resp_lang, creator_lang)
+            else:
+                translated_responses = raw_responses
+
+            # 4. Create session
+            session = await self.create_session(form_id, resp_lang)
             session_id = session["id"]
 
-            # 2. Bulk insert responses
-            responses = []
-            for field_id, value in data.get("responses", {}).items():
-                responses.append({
+            # 5. Bulk insert responses
+            to_save = []
+            for field_id, value in translated_responses.items():
+                to_save.append({
                     "session_id": session_id,
                     "field_id": field_id,
                     "extracted_value": value,
-                    "raw_transcript": "manual_entry",
+                    "raw_transcript": str(raw_responses.get(field_id, "manual_entry")),
                     "confidence": 1.0,
                     "attempts": 1
                 })
             
-            if responses:
-                self.client.table("responses").insert(responses).execute()
+            if to_save:
+                self.client.table("responses").insert(to_save).execute()
             
-            # 3. Mark session as completed
+            # 6. Mark session as completed
             self.client.table("sessions").update({"status": "completed", "completed_at": "now()"}).eq("id", session_id).execute()
             
             return {"status": "success", "session_id": session_id}

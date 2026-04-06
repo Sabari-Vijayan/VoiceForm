@@ -8,100 +8,95 @@ class GeminiService:
     def __init__(self):
         settings = get_settings()
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        self.model_id = 'gemini-2.5-flash'
+        self.model_id = 'gemini-3-flash-preview'
 
-    async def generate_form_schema(self, prompt: str) -> Dict[str, Any]:
+    async def generate_form_schema(self, prompt: str, language: str = 'en') -> Dict[str, Any]:
         """
-        Generates a form schema from a text prompt using Gemini 2.5 Flash.
+        Generates form JSON. Optimized for tokens.
         """
-        system_instruction = (
-            "You are a form generation expert. Given a description of a form, "
-            "generate a structured JSON schema. The output MUST be a JSON object with: "
-            "title, description, and an array 'fields'. "
-            "Each field MUST have: label, question_phrasing, type, options (if type is 'choice'), "
-            "required (boolean), validation_rules (json), and order_index (integer starting from 0). "
-            "Valid types: 'text', 'number', 'date', 'phone', 'email', 'choice'."
+        lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
+        L = lang_map.get(language, "English")
+
+        sys = (
+            f"Output JSON for a form in {L}. Fields: label(slug), question_phrasing({L}), "
+            "type(text|number|date|phone|email|choice), options(array if choice), "
+            "required(bool), order_index(int). Keys: title, description, fields."
         )
         
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=f"{system_instruction}\n\nUser Prompt: {prompt}",
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                )
+                contents=f"{sys}\nPrompt: {prompt}",
+                config=types.GenerateContentConfig(response_mime_type="application/json")
             )
             return json.loads(response.text)
         except Exception as e:
-            print(f"Error generating form: {e}")
+            print(f"Error: {e}")
             raise e
 
     async def translate_form(self, schema: Dict[str, Any], target_lang: str) -> Dict[str, Any]:
         """
-        Translates a form schema (title, description, and fields) into the target language using Gemini 2.5 Flash.
+        Translates schema. Optimized for tokens.
         """
         lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
-        target_name = lang_map.get(target_lang, target_lang)
+        T = lang_map.get(target_lang, target_lang)
 
-        print(f"Translating form '{schema.get('title')}' to {target_name}...")
-
-        system_instruction = (
-            f"You are a translation expert. Your task is to translate the provided form schema JSON into '{target_name}'.\n"
-            "STRICT RULES:\n"
-            "1. You MUST return a JSON object with the EXACT same keys as the input.\n"
-            "2. Translate the values for 'title' and 'description'.\n"
-            "3. For the 'fields' array, you MUST translate the 'question_phrasing' and the 'options' array for EVERY object in the list.\n"
-            "4. DO NOT translate 'id', 'form_id', 'type', 'label', 'required', or 'order_index'.\n"
-            "5. The output must be valid JSON."
-        )
+        sys = f"Translate JSON values to {T}. Keep keys, ids, types, labels same. Translate title, description, question_phrasing, options."
         
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=f"{system_instruction}\n\nInput JSON: {json.dumps(schema)}",
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                )
-            )
-            print(f"Gemini Raw Response: {response.text[:200]}...")
-            translated = json.loads(response.text)
-            print(f"Translation successful for {target_name}")
-            return translated
-        except Exception as e:
-            print(f"Translation FAILED: {str(e)}")
-            return schema
-
-    async def extract_value(self, question: str, field_type: str, transcript: str, language: str) -> Dict[str, Any]:
-        """
-        Extracts structured value using Gemini 2.5 Flash for well-rounded performance.
-        """
-        system_instruction = (
-            "You are an expert data extractor. Given a question, a field type, a user's spoken transcript, "
-            "and the language used, extract the structured value. "
-            "Return a JSON object with: 'value', 'confidence' (float 0.0 to 1.0), and 'ambiguous' (boolean). "
-            "CRITICAL: If the answer is in a language other than English, translate the extracted 'value' into English."
-            "If the transcript doesn't match the field type or is unclear, set ambiguous=true."
-        )
-        
-        prompt = (
-            f"Question: {question}\n"
-            f"Field Type: {field_type}\n"
-            f"User Transcript: {transcript}\n"
-            f"Language: {language}"
-        )
-        
-        try:
-            response = self.client.models.generate_content(
-                model=self.model_id,
-                contents=f"{system_instruction}\n\n{prompt}",
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                )
+                contents=f"{sys}\nJSON: {json.dumps(schema)}",
+                config=types.GenerateContentConfig(response_mime_type="application/json")
             )
             return json.loads(response.text)
         except Exception as e:
-            print(f"Error extracting value: {e}")
+            print(f"Fail: {e}")
+            return schema
+
+    async def extract_value(self, question: str, field_type: str, transcript: str, language: str, target_lang: str = 'en') -> Dict[str, Any]:
+        """
+        Extracts and translates. Optimized for tokens.
+        """
+        lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
+        T = lang_map.get(target_lang, "English")
+        L = lang_map.get(language, language)
+
+        sys = (
+            f"Extract '{field_type}' from transcript. "
+            f"Return JSON: {{'value': (translated to {T}), 'raw_value': (exact value from transcript in {L}), 'confidence': float, 'ambiguous': bool}}."
+        )
+        
+        prompt = f"Q: {question}\nLang: {language}\nTranscript: {transcript}"
+        
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=f"{sys}\n{prompt}",
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"Error: {e}")
             raise e
+
+    async def translate_text(self, text: str, target_lang: str) -> str:
+        """
+        Translates a single string.
+        """
+        lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
+        T = lang_map.get(target_lang, target_lang)
+
+        sys = f"Translate text to {T}. Return only the translated string, no JSON."
+        
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=f"{sys}\nText: {text}"
+            )
+            return response.text.strip()
+        except Exception as e:
+            return text
 
 # Instantiate as a singleton
 gemini_service = GeminiService()

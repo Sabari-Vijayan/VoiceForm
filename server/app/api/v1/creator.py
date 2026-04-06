@@ -24,10 +24,10 @@ async def generate_form(request: FormGenerationRequest):
     """
     try:
         # 1. Generate the raw schema from Gemini
-        schema = await gemini_service.generate_form_schema(request.prompt)
+        schema = await gemini_service.generate_form_schema(request.prompt, request.language)
         
         # 2. Save the generated schema into the Supabase 'forms' and 'form_fields' tables
-        saved_form = await supabase_service.create_form(creator_id=request.creator_id, schema=schema)
+        saved_form = await supabase_service.create_form(creator_id=request.creator_id, schema=schema, language=request.language)
         
         # Return the saved form, which now includes the DB-generated 'id'
         return saved_form
