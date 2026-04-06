@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from server.app.models.schemas import ExtractionRequest, ExtractionResponse
-from server.app.services.gemini_service import gemini_service
+from app.models.schemas import ExtractionRequest, ExtractionResponse
+from app.services.gemini_service import gemini_service
 
 router = APIRouter()
 

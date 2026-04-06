@@ -3,6 +3,13 @@ from typing import List, Optional, Any, Dict
 
 class FormGenerationRequest(BaseModel):
     prompt: str
+    creator_id: str # We need to know who is creating the form
+
+class FormListResponse(BaseModel):
+    id: str
+    title: str
+    description: Optional[str] = None
+    created_at: str
 
 class ExtractionRequest(BaseModel):
     question: str
@@ -16,6 +23,8 @@ class ExtractionResponse(BaseModel):
     ambiguous: bool
 
 class FormFieldSchema(BaseModel):
+    id: Optional[str] = None # Added for DB response
+    form_id: Optional[str] = None # Added for DB response
     label: str
     question_phrasing: str
     type: str
@@ -25,6 +34,7 @@ class FormFieldSchema(BaseModel):
     order_index: int
 
 class FormSchemaResponse(BaseModel):
+    id: str # Added ID returned from the database
     title: str
     description: Optional[str] = None
     fields: List[FormFieldSchema]

@@ -1,16 +1,16 @@
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import json
 from typing import List, Dict, Any
-from server.app.core.config import get_settings
+from app.core.config import get_settings
 
 class GeminiService:
     def __init__(self):
         settings = get_settings()
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        # Use Lite for fast, high-volume extraction and schema generation
-        self.lite_model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
-        # Use Live for potential future audio-to-audio real-time features
-        self.live_model = genai.GenerativeModel('gemini-3.1-flash-live-preview')
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        # We'll use these IDs with the new client
+        self.lite_model_id = 'gemini-3.1-flash-lite-preview'
+        self.live_model_id = 'gemini-3.1-flash-live-preview'
 
     async def generate_form_schema(self, prompt: str) -> Dict[str, Any]:
         """
@@ -26,10 +26,14 @@ class GeminiService:
         )
         
         try:
-            response = self.lite_model.generate_content(
-                f"{system_instruction}\n\nUser Prompt: {prompt}",
-                generation_config={"response_mime_type": "application/json"}
+            response = self.client.models.generate_content(
+                model=self.lite_model_id,
+                contents=f"{system_instruction}\n\nUser Prompt: {prompt}",
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
             )
+            # In the new SDK, the response object has a .text attribute or we can parse directly
             return json.loads(response.text)
         except Exception as e:
             print(f"Error generating form: {e}")
@@ -54,9 +58,12 @@ class GeminiService:
         )
         
         try:
-            response = self.lite_model.generate_content(
-                f"{system_instruction}\n\n{prompt}",
-                generation_config={"response_mime_type": "application/json"}
+            response = self.client.models.generate_content(
+                model=self.lite_model_id,
+                contents=f"{system_instruction}\n\n{prompt}",
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
             )
             return json.loads(response.text)
         except Exception as e:

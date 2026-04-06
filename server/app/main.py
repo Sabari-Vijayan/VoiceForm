@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.app.core.config import get_settings
+from app.core.config import get_settings
 
 settings = get_settings()
 
@@ -19,8 +19,8 @@ app.add_middleware(
 def read_root():
     return {"message": "Welcome to VoiceForm API"}
 
-from server.app.api.v1.creator import router as creator_router
-from server.app.api.v1.public import router as public_router
+from app.api.v1.creator import router as creator_router
+from app.api.v1.public import router as public_router
 
 app.include_router(creator_router, prefix="/api/v1/creator", tags=["Creator"])
 app.include_router(public_router, prefix="/api/v1/public", tags=["Public"])
