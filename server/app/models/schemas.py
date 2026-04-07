@@ -35,11 +35,21 @@ class ExtractionRequest(BaseModel):
     transcript: str
     language: str
 
+class BulkExtractionRequest(BaseModel):
+    form_id: str
+    language: str
+    # List of {field_id, question, field_type, transcript}
+    entries: List[Dict[str, Any]]
+
 class ExtractionResponse(BaseModel):
     value: Any
     raw_value: Any
     confidence: float
     ambiguous: bool
+
+class BulkExtractionResponse(BaseModel):
+    # Map of field_id -> ExtractionResponse
+    results: Dict[str, ExtractionResponse]
 
 class BulkResponseSubmit(BaseModel):
     respondent_language: str

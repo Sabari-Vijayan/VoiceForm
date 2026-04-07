@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Mic, Globe, Play, Loader2, Edit3, Save, 
-  CheckCircle2, ChevronLeft, ArrowRight, Info, AlertCircle
+  CheckCircle2, ChevronLeft, ArrowRight, Info, AlertCircle,
+  Keyboard, Settings, History
 } from 'lucide-react';
 import useVoiceSession from '../hooks/useVoiceSession';
+import VoiceOrb from '../components/VoiceOrb';
 
 const RespondentFormView = () => {
   const { formId } = useParams();
+  const navigate = useNavigate();
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,11 +18,13 @@ const RespondentFormView = () => {
   const [session, setSession] = useState(null);
   const [starting, setStarting] = useState(false);
   
-  // Modes: 'selection' | 'voice' | 'manual' | 'completed'
+  // Modes: 'selection' | 'voice' | 'manual' | 'review' | 'completed'
   const [mode, setMode] = useState('selection');
   const [manualData, setManualData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  
+  const scrollRef = useRef(null);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
@@ -50,6 +55,12 @@ const RespondentFormView = () => {
     fetchForm();
   }, [fetchForm]);
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [mode]);
+
   const submitResponses = React.useCallback(async (responsesToSubmit) => {
     setSubmitting(true);
     try {
@@ -76,13 +87,23 @@ const RespondentFormView = () => {
     status,
     transcript,
     error: voiceError,
-    responses: voiceResponses
+    transcriptsBuffer
   } = useVoiceSession(
     mode === 'voice' ? form : null,
     session?.session_id,
     language,
-    (finalResponses) => submitResponses(finalResponses)
+    (finalExtractedResponses) => {
+        setManualData(finalExtractedResponses);
+        setMode('review');
+    }
   );
+
+  const handleSwitchToManual = () => {
+      if (transcriptsBuffer && Object.keys(transcriptsBuffer).length > 0) {
+          setManualData(prev => ({ ...prev, ...transcriptsBuffer }));
+      }
+      setMode('manual');
+  };
 
   const handleStartSession = async (targetMode) => {
     if (targetMode === 'manual') {
@@ -111,17 +132,22 @@ const RespondentFormView = () => {
     }
   };
 
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    submitResponses(manualData);
-  };
+  if (loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+      <Loader2 className="animate-spin text-primary" size={48} />
+      <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] animate-pulse">Initializing Session</p>
+    </div>
+  );
 
-  if (loading) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" size={48} color="var(--accent-black)" /></div>;
   if (error) return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px' }}>
-        <div className="animate-fade-in">
-            <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Oops.</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+    <div className="min-h-screen flex items-center justify-center p-8 text-center bg-slate-50">
+        <div className="animate-fade-in max-w-sm">
+            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
+              <AlertCircle size={40} />
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 mb-4 uppercase tracking-tight">Oops.</h2>
+            <p className="text-slate-500 mb-10 font-medium leading-relaxed">{error}</p>
+            <button onClick={() => navigate('/')} className="bg-primary text-white px-8 py-4 rounded-full font-black text-xs uppercase tracking-widest btn-bouncy shadow-lg shadow-primary/20">Return Home</button>
         </div>
     </div>
   );
@@ -129,14 +155,16 @@ const RespondentFormView = () => {
   // --- COMPLETED STATE ---
   if (mode === 'completed') {
       return (
-          <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-              <div className="animate-fade-in container" style={{ maxWidth: '500px', textAlign: 'center' }}>
-                  <div style={{ background: 'var(--bg-secondary)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
-                    <CheckCircle2 size={40} color="#000" />
+          <div className="min-h-screen flex items-center justify-center p-8 bg-slate-50">
+              <div className="animate-fade-in max-w-md w-full text-center">
+                  <div className="w-24 h-24 bg-green-50 text-green-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-green-100">
+                    <CheckCircle2 size={48} />
                   </div>
-                  <h1>All set.</h1>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '40px' }}>Thank you for your time. Your responses have been securely recorded.</p>
-                  <button onClick={() => window.location.reload()} className="btn-primary mobile-full-width" style={{ width: '100%' }}>Return to Start</button>
+                  <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase tracking-tight">All set.</h1>
+                  <p className="text-slate-500 text-lg mb-12 font-medium">Thank you for your time. Your responses have been securely recorded by our AI.</p>
+                  <button onClick={() => window.location.reload()} className="w-full bg-primary text-white py-5 rounded-full font-black text-xs uppercase tracking-widest btn-bouncy shadow-2xl shadow-primary/30">
+                    Return to Start
+                  </button>
               </div>
           </div>
       );
@@ -145,191 +173,254 @@ const RespondentFormView = () => {
   // --- VOICE MODE ---
   if (mode === 'voice') {
     const currentField = form?.fields[currentFieldIndex];
+    const progress = ((currentFieldIndex) / form?.fields.length) * 100;
     
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', padding: '20px', background: '#000', color: '#fff' }}>
-        <div className="animate-fade-in container" style={{ maxWidth: '600px', textAlign: 'center', width: '100%' }}>
-            {voiceError && (
-                <div style={{ background: 'rgba(255, 68, 68, 0.1)', border: '1px solid #ff4444', padding: '16px', borderRadius: 'var(--radius-md)', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px', color: '#ff4444' }}>
-                    <AlertCircle size={20} />
-                    <p>{voiceError}</p>
+      <div className="min-h-[100dvh] flex flex-col bg-slate-50 relative overflow-hidden">
+        {/* Background Gradients */}
+        <div className="fixed inset-0 -z-10 opacity-40 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100 blur-[120px]"></div>
+        </div>
+
+        {/* Top App Bar */}
+        <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 h-20 shadow-sm">
+          <button onClick={() => setMode('selection')} className="p-3 rounded-xl hover:bg-slate-50 text-primary transition-all active:scale-90">
+            <ChevronLeft size={28} />
+          </button>
+          <div className="flex flex-col items-center">
+            <h1 className="font-black text-base text-slate-900 uppercase tracking-[0.25em]">VoiceForm</h1>
+            <div className="flex items-center gap-2">
+               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+               <span className="text-[10px] font-black text-primary uppercase tracking-widest">AI Active</span>
+            </div>
+          </div>
+          <button className="p-3 rounded-xl hover:bg-slate-50 text-slate-400 transition-all">
+            <Settings size={28} />
+          </button>
+        </header>
+
+        <main className="flex-grow pt-32 pb-48 px-8 max-w-xl mx-auto w-full flex flex-col">
+          {/* Progress Bar */}
+          <div className="mb-12">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">QUESTION {currentFieldIndex + 1} OF {form?.fields.length}</span>
+              <span className="text-xs font-black text-primary uppercase tracking-[0.2em]">{Math.round(progress)}% COMPLETED</span>
+            </div>
+            <div className="h-2 w-full bg-slate-200/50 rounded-full overflow-hidden backdrop-blur-sm">
+              <div className="h-full bg-primary transition-all duration-1000 ease-out rounded-full shadow-[0_0_15px_rgba(79,70,229,0.5)]" style={{ width: `${progress}%` }}></div>
+            </div>
+          </div>
+
+          {/* Chat Feed */}
+          <div className="flex-grow space-y-12 overflow-y-auto mb-16 no-scrollbar" ref={scrollRef}>
+            <div className="flex flex-col items-start max-w-[90%] animate-fade-in">
+              <div className="glass-card p-10 bg-white border-l-8 border-primary shadow-2xl shadow-slate-200/50">
+                <p className="font-bold text-2xl text-slate-900 leading-relaxed tracking-tight">{currentField?.question_phrasing}</p>
+              </div>
+              <span className="text-xs text-primary mt-4 ml-2 font-black uppercase tracking-[0.2em]">
+                {status === 'speaking' ? 'Assistant is speaking...' : status === 'listening' ? 'Listening for your voice...' : 'VoiceForm Assistant'}
+              </span>
+            </div>
+
+            {transcript && (
+              <div className="flex flex-col items-end self-end max-w-[90%] animate-fade-in">
+                <div className="bg-primary p-10 rounded-[2.5rem] rounded-tr-none shadow-2xl shadow-primary/30">
+                  <p className="text-white text-lg font-medium leading-relaxed">{transcript}</p>
                 </div>
+                <div className="flex items-center gap-3 mt-4 mr-2">
+                  <div className="flex gap-1">
+                    {[1,2,3].map(i => <div key={i} className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: `${i*0.1}s` }}></div>)}
+                  </div>
+                  <span className="text-xs text-slate-400 font-black uppercase tracking-widest">AI Processing...</span>
+                </div>
+              </div>
             )}
+          </div>
 
-            <div style={{ marginBottom: '24px', color: 'rgba(255,255,255,0.4)', fontWeight: '600', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
-                QUESTION {currentFieldIndex + 1} OF {form?.fields.length}
-            </div>
-            
-            <h1 style={{ fontWeight: '500', marginBottom: '48px', lineHeight: '1.2', fontSize: '2.5rem' }}>
-                {currentField?.question_phrasing}
-            </h1>
-
-            <div style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '48px' }}>
-                {status === 'listening' ? (
-                    <div className="voice-wave">
-                        <div className="voice-bar" style={{ background: '#fff' }}></div>
-                        <div className="voice-bar" style={{ background: '#fff' }}></div>
-                        <div className="voice-bar" style={{ background: '#fff' }}></div>
-                        <div className="voice-bar" style={{ background: '#fff' }}></div>
-                        <div className="voice-bar" style={{ background: '#fff' }}></div>
-                    </div>
-                ) : status === 'processing' || status === 'confirming' || status === 'speaking' ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                        <Loader2 className="animate-spin" size={40} color="#fff" />
-                        <span style={{ fontSize: '0.8rem', opacity: 0.5, textTransform: 'uppercase' }}>
-                            {status === 'speaking' ? 'Speaking' : status === 'confirming' ? 'Confirming' : 'Analyzing'}
-                        </span>
-                    </div>
-                ) : (
-                    <div style={{ width: '12px', height: '12px', background: 'rgba(255,255,255,0.2)', borderRadius: '50%' }}></div>
-                )}
-            </div>
-            
-            <div style={{ minHeight: '1.5em', marginBottom: '64px' }}>
-                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.5rem', fontStyle: 'italic' }}>
-                    {transcript || (status === 'listening' ? '...' : '')}
-                </p>
-            </div>
+          {/* Voice Orb Area */}
+          <div className="flex flex-col items-center justify-center space-y-12 mt-auto">
+            <VoiceOrb isListening={status === 'listening'} isSpeaking={status === 'speaking'} />
             
             <button 
-                onClick={() => setMode('manual')} 
-                className="mobile-full-width" 
-                style={{ background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 24px', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+              onClick={handleSwitchToManual}
+              className="flex items-center gap-4 px-10 py-5 rounded-full bg-white shadow-2xl shadow-slate-200/60 border border-slate-100 text-slate-500 hover:text-primary transition-all active:scale-95 group font-black text-xs uppercase tracking-[0.25em]"
             >
-                Switch to Typing
+              <Keyboard size={20} />
+              Switch to typing
             </button>
+          </div>
+        </main>
+
+        {/* Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-10 pb-12 pt-6 bg-white/80 backdrop-blur-2xl rounded-t-[4rem] z-50 border-t border-slate-100 shadow-[0_-15px_50px_rgba(0,0,0,0.06)]">
+          <button onClick={handleSwitchToManual} className="flex flex-col items-center gap-3 text-slate-400 hover:text-primary transition-all active:scale-90">
+            <Keyboard size={28} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Manual</span>
+          </button>
+          <div className="bg-primary text-white p-6 rounded-[2.5rem] shadow-2xl shadow-primary/40 active:scale-90 transition-all -translate-y-6">
+            <Mic size={40} />
+          </div>
+          <button className="flex flex-col items-center gap-3 text-slate-400 hover:text-primary transition-all active:scale-90">
+            <History size={28} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">History</span>
+          </button>
+        </nav>
+      </div>
+    );
+  }
+
+  // --- MANUAL/REVIEW MODE Styling ---
+  if (mode === 'manual' || mode === 'review') {
+    return (
+      <div className="min-h-screen bg-slate-50 py-24 md:py-32 px-8">
+        <div className="max-w-3xl mx-auto animate-fade-in">
+          <button onClick={() => setMode('selection')} className="flex items-center gap-3 text-slate-400 hover:text-primary mb-12 font-black text-xs uppercase tracking-[0.25em] transition-all group">
+            <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back to selection
+          </button>
+          
+          <header className="mb-20">
+            <h1 className="text-5xl font-black text-slate-900 mb-4 font-headline uppercase tracking-tight">
+              {mode === 'review' ? 'Review Submission' : 'Manual Entry'}
+            </h1>
+            <p className="text-slate-500 text-xl font-medium leading-relaxed">
+              {mode === 'review' 
+                ? "Confirm the AI-extracted values before final submission."
+                : form.description}
+            </p>
+          </header>
+
+          <div className="space-y-12">
+            {form.fields.map((field) => (
+              <div key={field.id} className="glass-card p-12 bg-white border-slate-100 shadow-2xl shadow-slate-200/40">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.25em] mb-8">
+                  {field.question_phrasing} {field.required && <span className="text-red-500 font-bold">*</span>}
+                </label>
+                
+                {mode === 'review' ? (
+                  <div className="flex justify-between items-center gap-10">
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                      {manualData[field.id] || <span className="text-red-400 italic text-base font-black uppercase">Data Missing</span>}
+                    </div>
+                    <button onClick={() => setMode('manual')} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:text-primary hover:bg-white border border-transparent hover:border-slate-100 transition-all shadow-sm">
+                      <Edit3 size={24} />
+                    </button>
+                  </div>
+                ) : (
+                  field.type === 'choice' ? (
+                    <select 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 font-bold text-slate-900 text-lg focus:ring-8 focus:ring-primary/5 focus:bg-white focus:border-primary outline-none transition-all shadow-inner"
+                      required={field.required}
+                      value={manualData[field.id] || ''}
+                      onChange={(e) => setManualData({...manualData, [field.id]: e.target.value})}
+                    >
+                      <option value="" className="text-slate-400">Select option...</option>
+                      {field.options?.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
+                    </select>
+                  ) : (
+                    <input 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 font-bold text-slate-900 text-lg focus:ring-8 focus:ring-primary/5 focus:bg-white focus:border-primary outline-none transition-all shadow-inner placeholder-slate-300"
+                      type={field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : 'text'}
+                      placeholder="Enter value here..."
+                      required={field.required}
+                      value={manualData[field.id] || ''}
+                      onChange={(e) => setManualData({...manualData, [field.id]: e.target.value})}
+                    />
+                  )
+                )}
+              </div>
+            ))}
+            
+            <button 
+              onClick={() => submitResponses(manualData)}
+              className="w-full bg-primary text-white py-8 rounded-[2.5rem] font-black text-sm uppercase tracking-[0.25em] btn-bouncy shadow-[0_25px_60px_rgba(79,70,229,0.4)] mt-16 flex items-center justify-center gap-5"
+              disabled={submitting}
+            >
+              {submitting ? <Loader2 className="animate-spin" size={28} /> : <><Save size={24} /> {mode === 'review' ? 'Confirm & Finalize' : 'Submit Response'}</>}
+            </button>
+
+            {mode === 'review' && (
+               <button 
+               onClick={() => setMode('selection')}
+               className="w-full text-slate-400 font-black text-xs uppercase tracking-[0.4em] hover:text-slate-600 transition-all mt-10"
+             >
+               Discard and Restart
+             </button>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // --- MANUAL MODE ---
-  if (mode === 'manual') {
-      return (
-        <div className="mobile-padding-sm" style={{ minHeight: '100vh', background: 'var(--bg-secondary)', padding: '64px 20px' }}>
-            <div className="animate-fade-in container" style={{ maxWidth: '600px', margin: '0 auto', padding: 0 }}>
-                <button onClick={() => setMode('selection')} style={{ background: 'transparent', color: 'var(--text-secondary)', marginBottom: '32px', padding: 0 }}>
-                    <ChevronLeft size={18} /> Back to selection
-                </button>
-                
-                <header style={{ marginBottom: '48px' }}>
-                    <h1 style={{ marginBottom: '12px' }}>{form.title}</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{form.description}</p>
-                </header>
-                
-                <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    {form.fields.map((field) => (
-                        <div key={field.id} className="card mobile-padding-sm" style={{ padding: '32px', boxShadow: 'var(--shadow-sm)' }}>
-                            <label style={{ display: 'block', fontWeight: '600', fontSize: '1.1rem', marginBottom: '20px' }}>
-                                {field.question_phrasing} {field.required && <span style={{ color: '#ff4444' }}>*</span>}
-                            </label>
-                            
-                            {field.type === 'choice' ? (
-                                <select 
-                                    className="input-minimal"
-                                    required={field.required}
-                                    onChange={(e) => setManualData({...manualData, [field.id]: e.target.value})}
-                                >
-                                    <option value="">Select an option...</option>
-                                    {field.options?.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
-                                </select>
-                            ) : field.type === 'number' ? (
-                                <input 
-                                    className="input-minimal"
-                                    type="number"
-                                    placeholder="Enter a number..."
-                                    required={field.required}
-                                    onChange={(e) => setManualData({...manualData, [field.id]: e.target.value})}
-                                />
-                            ) : (
-                                <input 
-                                    className="input-minimal"
-                                    type={field.type === 'email' ? 'email' : 'text'}
-                                    placeholder="Type your answer..."
-                                    required={field.required}
-                                    onChange={(e) => setManualData({...manualData, [field.id]: e.target.value})}
-                                />
-                            )}
-                        </div>
-                    ))}
-                    
-                    <button 
-                        type="submit" 
-                        className="btn-primary"
-                        disabled={submitting}
-                        style={{ height: '64px', fontSize: '1.1rem', marginTop: '20px' }}
-                    >
-                        {submitting ? <Loader2 className="animate-spin" /> : <><Save size={20} /> Submit Response</>}
-                    </button>
-                </form>
-            </div>
-        </div>
-      );
-  }
-
   // --- SELECTION (LANDING) STATE ---
   return (
-    <div className="mobile-padding-sm" style={{ minHeight: '100vh', background: 'var(--bg-secondary)', padding: '64px 20px' }}>
-      <div className="animate-fade-in container" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <header style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <div style={{ display: 'inline-flex', padding: '12px 20px', background: 'white', border: '1px solid var(--border-subtle)', borderRadius: '100px', fontSize: '0.85rem', fontWeight: '600', marginBottom: '24px', alignItems: 'center', gap: '8px' }}>
-                <Info size={16} /> AI-Powered Voice Form
+    <div className="min-h-screen bg-slate-50 py-24 md:py-32 px-6 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[100px] -z-10"></div>
+      
+      <div className="max-w-5xl mx-auto animate-fade-in">
+        <header className="text-center mb-24">
+            <div className="inline-flex items-center gap-4 px-6 py-3 bg-white border border-slate-100 rounded-full text-xs font-black text-slate-400 mb-12 shadow-xl shadow-slate-200/50 uppercase tracking-[0.25em]">
+                <div className="w-2.5 h-2.5 bg-primary rounded-full animate-ping"></div>
+                AI Form Intelligence
             </div>
-            <h1 style={{ lineHeight: '1.1', marginBottom: '16px', letterSpacing: '-0.04em', fontSize: '3rem' }}>{form.title}</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto 40px' }}>{form.description}</p>
+            <h1 className="text-6xl md:text-8xl font-black text-slate-900 mb-8 tracking-tighter uppercase font-headline leading-tight">{form.title}</h1>
+            <p className="text-slate-500 text-2xl max-w-3xl mx-auto mb-20 font-medium italic leading-relaxed">"{form.description}"</p>
             
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }} className="mobile-stack">
+            <div className="flex flex-col sm:flex-row gap-10 justify-center items-center">
                 <button 
-                    className="btn-primary"
+                    className="bg-primary text-white px-14 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] btn-bouncy shadow-2xl shadow-primary/40 flex items-center gap-5 w-full sm:w-auto justify-center"
                     onClick={() => handleStartSession('voice')} 
                     disabled={starting || isTranslating}
-                    style={{ height: '64px', fontSize: '1.1rem', padding: '0 32px' }}
                 >
-                    {starting ? <Loader2 className="animate-spin" /> : <><Mic size={20} /> Start Voice Interview</>}
+                    {starting ? <Loader2 className="animate-spin" /> : <><Mic size={28} /> Start Voice Session</>}
                 </button>
                 <button 
-                    className="btn-secondary"
+                    className="bg-white text-slate-900 border border-slate-200 px-14 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all w-full sm:w-auto flex items-center justify-center gap-4 shadow-xl shadow-slate-200/50"
                     onClick={() => handleStartSession('manual')} 
                     disabled={starting || isTranslating}
-                    style={{ height: '64px', fontSize: '1.1rem', padding: '0 32px' }}
                 >
-                    Fill manually <ArrowRight size={18} />
+                    Manual Mode <ArrowRight size={24} className="text-primary" />
                 </button>
             </div>
         </header>
 
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <div style={{ background: 'white', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '12px', borderRadius: '12px' }}>
-                    <Globe size={20} />
+        <div className="max-w-3xl mx-auto">
+            <div className="glass-card p-12 bg-white/80 border-white mb-24 relative overflow-hidden shadow-2xl shadow-slate-200/40">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+                <div className="flex items-center gap-10">
+                  <div className="w-20 h-20 bg-slate-900 text-white rounded-3xl flex items-center justify-center shadow-2xl">
+                      <Globe size={40} />
+                  </div>
+                  <div className="flex-grow">
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-3">
+                          Primary Language
+                      </label>
+                      <select 
+                          className="w-full bg-transparent text-3xl font-black text-slate-900 outline-none cursor-pointer uppercase tracking-tight"
+                          value={language || ''} 
+                          onChange={(e) => setLanguage(e.target.value)}
+                          disabled={isTranslating}
+                      >
+                          <option value="en">English (US)</option>
+                          <option value="hi">Hindi (IN)</option>
+                          <option value="ml">Malayalam (IN)</option>
+                          <option value="es">Spanish (ES)</option>
+                      </select>
+                  </div>
+                  {isTranslating && <Loader2 size={32} className="animate-spin text-primary" />}
                 </div>
-                <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Interview Language
-                    </label>
-                    <select 
-                        className="input-minimal"
-                        value={language || ''} 
-                        onChange={(e) => setLanguage(e.target.value)}
-                        style={{ border: 'none', padding: 0, height: 'auto', fontSize: '1.1rem', fontWeight: '600' }}
-                        disabled={isTranslating}
-                    >
-                        <option value="en">English</option>
-                        <option value="hi">Hindi (हिंदी)</option>
-                        <option value="ml">Malayalam (മലയാളം)</option>
-                        <option value="es">Spanish (Español)</option>
-                    </select>
-                </div>
-                {isTranslating && <Loader2 size={20} className="animate-spin" />}
             </div>
 
-            <div style={{ opacity: 0.6, pointerEvents: 'none' }}>
-                <h3 style={{ marginBottom: '24px', fontSize: '0.9rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Form Preview</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="opacity-30 select-none pointer-events-none mb-32">
+                <h3 className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.5em] mb-12">Form Architecture Preview</h3>
+                <div className="space-y-10">
                     {form.fields.map((field) => (
-                        <div key={field.id} className="card" style={{ padding: '24px' }}>
-                            <p style={{ fontWeight: '600', marginBottom: '8px' }}>{field.question_phrasing}</p>
-                            <div style={{ height: '40px', background: 'var(--bg-secondary)', borderRadius: '8px' }}></div>
+                        <div key={field.id} className="glass-card p-12 border-slate-50 bg-white/50">
+                            <p className="font-black text-xs text-slate-400 uppercase tracking-[0.2em] mb-6">{field.label}</p>
+                            <p className="font-bold text-slate-800 text-2xl mb-6">{field.question_phrasing}</p>
+                            <div className="h-2 bg-slate-100 rounded-full w-full"></div>
                         </div>
                     ))}
                 </div>
@@ -339,5 +430,8 @@ const RespondentFormView = () => {
     </div>
   );
 };
+
+// Mock icon for Brain if missing
+const Brain = ({ size, className }) => <Info size={size} className={className} />;
 
 export default RespondentFormView;

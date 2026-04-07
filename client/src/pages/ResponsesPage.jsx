@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   ArrowLeft, Download, Loader2, MessageSquare, 
   BarChart3, Users, CheckCircle2, Globe, 
-  Info, Calendar, ChevronRight
+  Info, Calendar, ChevronRight, Play, Filter,
+  Activity, Award
 } from 'lucide-react';
+import Layout from '../components/Layout';
 
 const ResponsesPage = () => {
   const { formId } = useParams();
   const navigate = useNavigate();
-  const { user: _user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,28 +37,19 @@ const ResponsesPage = () => {
 
   const exportCSV = () => {
     if (!data) return;
-    
     const headers = ['Session ID', 'Language', 'Status', 'Started At', ...data.form.fields.map(f => f.label)];
     const rows = data.sessions.map(s => {
       const responseMap = {};
-      s.responses.forEach(r => {
-        responseMap[r.field_id] = r.value;
-      });
-      
+      s.responses.forEach(r => { responseMap[r.field_id] = r.extracted_value || r.value; });
       return [
-        s.id,
-        s.respondent_language,
-        s.status,
-        new Date(s.started_at).toLocaleString(),
+        s.id, s.respondent_language, s.status, new Date(s.started_at).toLocaleString(),
         ...data.form.fields.map(f => responseMap[f.id] || '')
       ];
     });
-    
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
+    link.setAttribute("href", URL.createObjectURL(blob));
     link.setAttribute("download", `responses_${formId}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
@@ -66,140 +58,176 @@ const ResponsesPage = () => {
   };
 
   if (loading) return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-        <Loader2 className="animate-spin" size={40} />
-        <p style={{ color: 'var(--text-secondary)' }}>Analyzing responses...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <Loader2 className="animate-spin text-primary" size={48} />
+        <p className="text-slate-500 font-black animate-pulse uppercase tracking-[0.2em] text-[10px]">Analyzing insights...</p>
     </div>
   );
 
   if (error) return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px' }}>
-        <div>
-            <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>Error</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>{error}</p>
-            <button onClick={() => navigate('/dashboard')} className="btn-primary">Back to Dashboard</button>
+    <div className="min-h-screen flex items-center justify-center p-6 text-center bg-slate-50">
+        <div className="animate-fade-in max-w-md">
+            <h2 className="text-4xl font-black text-slate-900 mb-4 uppercase tracking-tight">Error</h2>
+            <p className="text-slate-500 mb-8 text-lg font-medium">{error}</p>
+            <button onClick={() => navigate('/dashboard')} className="bg-primary text-white px-10 py-4 rounded-full font-black uppercase tracking-widest text-xs btn-bouncy shadow-lg shadow-primary/20">
+              Back to Dashboard
+            </button>
         </div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)', padding: '40px 20px' }}>
-      <div className="container" style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        
+    <Layout>
+      <div className="max-w-7xl mx-auto px-6 py-12 md:py-16">
         {/* Header */}
-        <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+        <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 animate-fade-in">
             <div>
-                <button onClick={() => navigate('/dashboard')} style={{ background: 'transparent', color: 'var(--text-secondary)', marginBottom: '16px', padding: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ArrowLeft size={16} /> Back to Dashboard
-                </button>
-                <h1 style={{ fontSize: '2.25rem', marginBottom: '8px' }}>{data.form.title}</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>Review and analyze respondent data.</p>
+                <Link to="/dashboard" className="inline-flex items-center gap-2 text-slate-400 hover:text-primary mb-6 font-black text-[10px] uppercase tracking-[0.2em] transition-all group">
+                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
+                </Link>
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 font-headline uppercase tracking-tight">{data.form.title}</h1>
+                <p className="text-slate-500 text-lg font-medium italic">"Review and analyze respondent data through an AI lens."</p>
             </div>
-            <button onClick={exportCSV} className="btn-secondary" style={{ background: 'white' }}>
-                <Download size={18} /> Export CSV
+            <button onClick={exportCSV} className="bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 hover:bg-slate-50 transition-all shadow-sm btn-bouncy">
+                <Download size={18} className="text-primary" /> Export CSV
             </button>
         </header>
 
         {/* Stats Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '48px' }}>
-            <div className="card" style={{ padding: '24px' }}>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Users size={16} /> TOTAL RESPONSES
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="glass-card p-8 bg-white border-slate-200 group hover:border-primary/20 transition-all">
+                <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors duration-500">
+                    <Users size={24} />
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: '700' }}>{data.total_sessions}</div>
+                <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">TOTAL RESPONSES</h3>
+                <div className="text-4xl font-black text-slate-900 tracking-tight">{data.total_sessions}</div>
             </div>
-            <div className="card" style={{ padding: '24px' }}>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CheckCircle2 size={16} /> COMPLETION RATE
+            
+            <div className="glass-card p-8 bg-white border-slate-200 group hover:border-primary/20 transition-all">
+                <div className="w-12 h-12 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-500 group-hover:text-white transition-colors duration-500">
+                    <Activity size={24} />
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: '700' }}>{data.completion_rate}%</div>
+                <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">COMPLETION RATE</h3>
+                <div className="text-4xl font-black text-slate-900 tracking-tight">{data.completion_rate}%</div>
             </div>
-            <div className="card" style={{ padding: '24px' }}>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <BarChart3 size={16} /> AVG. CONFIDENCE
+
+            <div className="glass-card p-8 bg-white border-slate-200 group hover:border-primary/20 transition-all">
+                <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-500">
+                    <Award size={24} />
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: '700' }}>{data.average_confidence}</div>
+                <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">AVG. CONFIDENCE</h3>
+                <div className="text-4xl font-black text-slate-900 tracking-tight">{Math.round(data.average_confidence * 100)}%</div>
             </div>
-            <div className="card" style={{ padding: '24px' }}>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Globe size={16} /> LANGUAGES
+
+            <div className="glass-card p-8 bg-white border-slate-200 group hover:border-primary/20 transition-all">
+                <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-500">
+                    <Globe size={24} />
                 </div>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '8px' }}>
+                <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">LANGUAGES</h3>
+                <div className="flex gap-2 flex-wrap mt-2">
                     {Object.entries(data.responses_by_language).map(([lang, count]) => (
-                        <div key={lang} style={{ background: 'var(--bg-secondary)', padding: '4px 12px', borderRadius: '100px', fontSize: '0.9rem', fontWeight: '600' }}>
-                            {lang.toUpperCase()}: {count}
-                        </div>
+                        <span key={lang} className="bg-slate-50 text-[10px] font-black px-2 py-1 rounded-md text-primary uppercase border border-slate-100">
+                            {lang}: {count}
+                        </span>
                     ))}
                 </div>
             </div>
         </div>
 
-        {/* Responses Table */}
-        <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1.25rem' }}>Completed Submissions</h3>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Showing {data.sessions.length} of {data.total_sessions} total sessions</div>
+        {/* Responses Table Area */}
+        <section className="glass-card bg-white border-slate-200 overflow-hidden shadow-2xl shadow-slate-200/40 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 font-headline uppercase tracking-tight">Submissions Feed</h3>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.1em]">Real-time Insights • {data.sessions.length} sessions</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button className="p-3 text-slate-400 hover:text-primary transition-all bg-white border border-slate-200 rounded-2xl shadow-sm">
+                    <Filter size={20} />
+                  </button>
+                  <div className="h-10 w-px bg-slate-200"></div>
+                  <div className="flex flex-col items-end">
+                    <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Data Sync</div>
+                    <div className="text-xs font-bold text-slate-400 uppercase">Status: Live</div>
+                  </div>
+                </div>
             </div>
             
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr style={{ background: 'var(--bg-secondary)' }}>
-                            <th style={{ padding: '16px 24px', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)' }}>STATUS</th>
-                            <th style={{ padding: '16px 24px', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)' }}>LANGUAGE</th>
+                        <tr className="bg-white border-b border-slate-100">
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Language</th>
                             {data.form.fields.map(f => (
-                                <th key={f.id} style={{ padding: '16px 24px', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', minWidth: '150px' }}>
-                                    {f.label.toUpperCase()}
+                                <th key={f.id} className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] min-w-[250px]">
+                                    {f.label}
                                 </th>
                             ))}
-                            <th style={{ padding: '16px 24px', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)' }}>STARTED</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Started</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-50">
                         {data.sessions.length === 0 ? (
                             <tr>
-                                <td colSpan={4 + data.form.fields.length} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                    No responses recorded yet.
+                                <td colSpan={4 + data.form.fields.length} className="px-8 py-32 text-center">
+                                    <div className="flex flex-col items-center gap-6">
+                                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+                                        <MessageSquare size={40} className="text-slate-200" />
+                                      </div>
+                                      <p className="text-slate-400 font-black uppercase tracking-widest">No responses recorded yet.</p>
+                                    </div>
                                 </td>
                             </tr>
                         ) : data.sessions.map(session => (
-                            <tr key={session.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <span style={{ 
-                                        padding: '4px 8px', 
-                                        borderRadius: '4px', 
-                                        fontSize: '0.75rem', 
-                                        fontWeight: '700',
-                                        background: session.status === 'completed' ? '#e6fffa' : '#fff5f5',
-                                        color: session.status === 'completed' ? '#2c7a7b' : '#c53030'
-                                    }}>
-                                        {session.status.toUpperCase()}
+                            <tr key={session.id} className="hover:bg-slate-50 transition-all group border-l-4 border-transparent hover:border-primary">
+                                <td className="px-8 py-8">
+                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] ${
+                                        session.status === 'completed' 
+                                          ? 'bg-green-50 text-green-600 border border-green-100' 
+                                          : 'bg-orange-50 text-orange-600 border border-orange-100'
+                                    }`}>
+                                        {session.status}
                                     </span>
                                 </td>
-                                <td style={{ padding: '16px 24px', fontSize: '0.9rem', fontWeight: '500' }}>
-                                    {session.respondent_language.toUpperCase()}
+                                <td className="px-8 py-8 font-black text-slate-500 text-xs tracking-widest uppercase">
+                                    {session.respondent_language}
                                 </td>
                                 {data.form.fields.map(field => {
                                     const resp = session.responses.find(r => r.field_id === field.id);
                                     return (
-                                        <td key={field.id} style={{ padding: '16px 24px' }}>
+                                        <td key={field.id} className="px-8 py-8">
                                             {resp ? (
-                                                <div title={resp.raw_transcript}>
-                                                    <div style={{ fontSize: '0.95rem' }}>
-                                                        {typeof resp.value === 'object' ? JSON.stringify(resp.value) : String(resp.value)}
+                                                <div className="space-y-3">
+                                                    <div className="text-base font-bold text-slate-900 leading-snug tracking-tight">
+                                                        {typeof (resp.extracted_value || resp.value) === 'object' 
+                                                          ? JSON.stringify(resp.extracted_value || resp.value) 
+                                                          : String(resp.extracted_value || resp.value)}
                                                     </div>
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                                        Conf: {Math.round(resp.confidence * 100)}%
+                                                    <div className="flex items-center gap-3">
+                                                      <div className="flex-grow h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div 
+                                                          className={`h-full rounded-full transition-all duration-1000 ${resp.confidence > 0.8 ? 'bg-green-500' : 'bg-orange-500'}`}
+                                                          style={{ width: `${resp.confidence * 100}%` }}
+                                                        ></div>
+                                                      </div>
+                                                      <span className="text-[10px] font-black text-slate-400">{Math.round(resp.confidence * 100)}% CONF</span>
+                                                      <button className="p-1.5 hover:text-primary text-slate-300 transition-colors" title="Listen to raw audio">
+                                                        <Play size={14} fill="currentColor" />
+                                                      </button>
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 italic leading-relaxed line-clamp-1 group-hover:line-clamp-none transition-all duration-500">
+                                                       "{resp.raw_transcript}"
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <span style={{ color: 'var(--border-strong)' }}>—</span>
+                                                <div className="h-1.5 w-8 bg-slate-100 rounded-full"></div>
                                             )}
                                         </td>
                                     );
                                 })}
-                                <td style={{ padding: '16px 24px', fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                                    {new Date(session.started_at).toLocaleDateString()}
+                                <td className="px-8 py-8 text-right font-black text-slate-400 text-[10px] uppercase tracking-widest whitespace-nowrap">
+                                    {new Date(session.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </td>
                             </tr>
                         ))}
@@ -208,7 +236,7 @@ const ResponsesPage = () => {
             </div>
         </section>
       </div>
-    </div>
+    </Layout>
   );
 };
 

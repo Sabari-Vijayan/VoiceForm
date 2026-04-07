@@ -1,9 +1,51 @@
-from fastapi import APIRouter, HTTPException
-from app.models.schemas import ExtractionRequest, ExtractionResponse, FormSchemaWithFields, SessionCreateRequest, SessionResponse, BulkResponseSubmit
+from fastapi import APIRouter, HTTPException, Query
+from app.models.schemas import (
+    ExtractionRequest, ExtractionResponse, FormSchemaWithFields, 
+    SessionCreateRequest, SessionResponse, BulkResponseSubmit,
+    BulkExtractionRequest, BulkExtractionResponse
+)
 from app.services.gemini_service import gemini_service
 from app.services.supabase_service import supabase_service
+from app.services.tts_service import tts_service
 
 router = APIRouter()
+
+@router.post("/bulk-extract", response_model=BulkExtractionResponse)
+async def bulk_extract(request: BulkExtractionRequest):
+    """
+    Extract multiple values from a list of transcripts in one AI call.
+    """
+    try:
+        form = await supabase_service.get_public_form(request.form_id)
+        target_lang = form.get("creator_language", "en")
+        
+        results = await gemini_service.bulk_extract(
+            entries=request.entries,
+            target_lang=target_lang
+        )
+        return {"results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/tts")
+async def get_tts(text: str, lang: str = "en"):
+    """
+    Generate audio (MP3) for text. Returns base64 encoded string.
+    """
+    try:
+        if not text:
+            raise HTTPException(status_code=400, detail="No text provided")
+            
+        audio_base64 = await tts_service.text_to_speech(text, lang)
+        if not audio_base64:
+            raise Exception("TTS Service returned empty audio content")
+            
+        return {"audioContent": audio_base64}
+    except Exception as e:
+        print(f"ERROR IN /tts ENDPOINT: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/forms/{form_id}/submit")
 async def submit_manual_responses(form_id: str, request: BulkResponseSubmit):

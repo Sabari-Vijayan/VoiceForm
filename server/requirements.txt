@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 supabase
 google-genai
+google-cloud-texttospeech
 python-dotenv
 pydantic
 pydantic-settings

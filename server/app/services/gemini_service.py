@@ -36,14 +36,17 @@ class GeminiService:
 
     async def translate_form(self, schema: Dict[str, Any], target_lang: str) -> Dict[str, Any]:
         """
-        Translates schema. Optimized for tokens.
+        Translates schema with a warm, caring personality.
         """
         lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
         T = lang_map.get(target_lang, target_lang)
 
         sys = (
-            f"Translate JSON values to {T}. Return ONLY raw JSON. "
-            "Keep keys, ids, types, labels same. Translate title, description, question_phrasing, options."
+            f"Translate JSON values to {T}. "
+            "IMPORTANT: Use a warm, caring, and human-like personality. "
+            "Instead of dry questions, use conversational phrasing (e.g., 'I'd love to know your name' instead of 'What is your name?'). "
+            "Make the respondent feel comfortable and heard. "
+            "Return ONLY raw JSON. Keep keys, ids, types, labels same. Translate title, description, question_phrasing, options."
         )
         
         try:
@@ -111,7 +114,33 @@ class GeminiService:
         except Exception as e:
             return text
 
-    async def translate_manual_responses(self, responses: Dict[str, Any], source_lang: str, target_lang: str = 'en') -> Dict[str, Any]:
+    async def bulk_extract(self, entries: List[Dict[str, Any]], target_lang: str = 'en') -> Dict[str, Any]:
+        """
+        Extracts multiple fields in one single pass.
+        """
+        lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
+        T = lang_map.get(target_lang, "English")
+
+        sys = (
+            f"Extract values for multiple fields from their transcripts. "
+            f"For each field_id, return a JSON object: {{'value': (translated to {T}), 'raw_value': (exact value from transcript), 'confidence': float, 'ambiguous': bool}}. "
+            f"Output a single JSON object mapping field_ids to these result objects."
+        )
+        
+        prompt = "Extract these fields:\n"
+        for entry in entries:
+            prompt += f"- ID: {entry['field_id']} | Type: {entry['field_type']} | Question: {entry['question']} | Transcript: {entry['transcript']}\n"
+        
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=f"{sys}\n{prompt}",
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"Bulk Extraction Error: {e}")
+            raise e
         """
         Translates response values. Optimized for tokens.
         """

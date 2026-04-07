@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        slate: {
+                            50: "#F8FAFC",
+                            100: "#F1F5F9",
+                            200: "#E2E8F0",
+                            300: "#CBD5E1",
+                            400: "#94A3B8",
+                            500: "#64748B",
+                            600: "#475569",
+                            700: "#334155",
+                            800: "#1E293B",
+                            900: "#0F172A",
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "label": ["Manrope", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        /* Custom Waveform CSS */
+        .wave-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 60px;
+        }
+        .wave-bar {
+            width: 4px;
+            height: 10px;
+            background: #4F46E5;
+            border-radius: 2px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+        @keyframes wave {
+            0%, 100% { height: 10px; opacity: 0.5; }
+            50% { height: 50px; opacity: 1; }
+        }
+        .bouncy-btn:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-body text-slate-800 antialiased">
+<!-- TopNavBar (Shared Component) -->
+<nav class="fixed top-0 w-full z-50 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md border-b border-white/20 dark:border-slate-800/50 shadow-sm">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-6 h-16">
+<div class="flex items-center gap-2">
+<span class="text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 font-headline">VoiceForm</span>
+</div>
+<!-- Desktop Links -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-sans font-medium text-base transition-opacity hover:opacity-80" href="#">Products</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-sans font-medium text-base transition-opacity hover:opacity-80" href="#">Solutions</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-indigo-500 font-sans font-medium text-base transition-opacity hover:opacity-80" href="#">Pricing</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-indigo-600 dark:text-indigo-400 font-sans font-medium text-base active:scale-95 duration-200">Log In</button>
+<button class="bg-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold active:scale-95 duration-200">Get Started</button>
+</div>
+</div>
+</nav>
+<main class="pt-16">
+<!-- Hero Section -->
+<section class="relative overflow-hidden pt-20 pb-32">
+<div class="max-w-7xl mx-auto px-6 relative z-10">
+<div class="text-center max-w-3xl mx-auto">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold mb-6 tracking-wide uppercase">
+<span class="material-symbols-outlined text-sm">record_voice_over</span>
+                        The Future of Data Collection
+                    </div>
+<h1 class="text-5xl md:text-7xl font-extrabold font-headline text-slate-900 leading-[1.1] mb-8 tracking-tight">
+                        Speak, <span class="text-indigo-600">don't type</span>.
+                    </h1>
+<p class="text-xl text-slate-600 mb-10 leading-relaxed font-medium">
+                        Collect higher quality insights with voice-powered forms. VoiceForm captures the nuance of human speech and transforms it into actionable data instantly.
+                    </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+<button class="bouncy-btn bg-indigo-600 text-white px-10 py-5 rounded-full text-lg font-bold shadow-xl shadow-indigo-200 flex items-center gap-3">
+                            Try it now
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<div class="flex items-center gap-4 px-6 py-4 glass-card rounded-2xl">
+<div class="wave-container">
+<div class="wave-bar" style="animation-delay: 0.1s"></div>
+<div class="wave-bar" style="animation-delay: 0.3s"></div>
+<div class="wave-bar" style="animation-delay: 0.5s"></div>
+<div class="wave-bar" style="animation-delay: 0.2s"></div>
+<div class="wave-bar" style="animation-delay: 0.4s"></div>
+<div class="wave-bar" style="animation-delay: 0.6s"></div>
+</div>
+<span class="text-sm font-semibold text-slate-500 uppercase tracking-widest">Listening...</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative background elements -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+<div class="absolute top-20 left-10 w-72 h-72 bg-indigo-200/30 rounded-full blur-3xl"></div>
+<div class="absolute bottom-0 right-10 w-96 h-96 bg-blue-100/40 rounded-full blur-3xl"></div>
+</div>
+</section>
+<!-- Feature Showcase (Bento Grid) -->
+<section class="py-24 bg-white">
+<div class="max-w-7xl mx-auto px-6">
+<div class="mb-16 text-center">
+<h2 class="text-3xl font-bold font-headline text-slate-900 mb-4">Why VoiceForm?</h2>
+<p class="text-slate-500 max-w-xl mx-auto text-lg">Remove the friction of typing and let your users express themselves naturally.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Large Card -->
+<div class="md:col-span-8 glass-card bg-slate-50/50 p-8 rounded-3xl overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+<div class="relative z-10">
+<div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-6">
+<span class="material-symbols-outlined" data-icon="neurology">neurology</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">AI-Powered Transcription</h3>
+<p class="text-slate-600 max-w-md mb-6 leading-relaxed">Our advanced neural engines process voice in 40+ languages with 99% accuracy. No more "pardon me" moments.</p>
+<img class="w-full h-48 object-cover rounded-xl mt-4" data-alt="High-tech abstract visualization of neural networks and data processing with glowing blue and purple nodes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcySfZa97s7wGI71WJhUMniGGp5uHXSjNhKQ4wAfnq8nvUXjA0qybcY7bFbb4F_8oKwHAiNSJgiQopHQ-T-JQqeYEMqGNzG8UWA_9l2Tt5ZBgLGTp75rgq1zaVumIdfmo39vL-_sU9ZYXUDya1FnGl86KUe0QXcAijy36ONbTDlyUFJOAJTN-CA4HOuRB2E_084qqRUJuaO36hSymYwLJIT0Z-SpDmAf_3mcuvf4wuc3x-QYGi8qech1IYZBFh8oKdNjCYA2fd34LW"/>
+</div>
+</div>
+<!-- Small Card -->
+<div class="md:col-span-4 bg-indigo-600 p-8 rounded-3xl text-white flex flex-col justify-between hover:shadow-xl transition-all duration-300">
+<div>
+<div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">3x Faster Completion</h3>
+<p class="text-indigo-100 leading-relaxed">People speak faster than they type. Reduce form abandonment and increase completion rates overnight.</p>
+</div>
+<div class="mt-8 text-4xl font-black">+240%</div>
+</div>
+<!-- Medium Card -->
+<div class="md:col-span-6 glass-card p-8 rounded-3xl border border-slate-200 hover:border-indigo-200 transition-colors">
+<div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-6">
+<span class="material-symbols-outlined" data-icon="sentiment_satisfied">sentiment_satisfied</span>
+</div>
+<h3 class="text-xl font-bold mb-2 text-slate-900">Sentiment Analysis</h3>
+<p class="text-slate-500">Go beyond words. Our engine detects tone and emotion to give you a deeper understanding of user feedback.</p>
+</div>
+<!-- Medium Card -->
+<div class="md:col-span-6 glass-card p-8 rounded-3xl border border-slate-200 hover:border-indigo-200 transition-colors">
+<div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-6">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+</div>
+<h3 class="text-xl font-bold mb-2 text-slate-900">Enterprise Security</h3>
+<p class="text-slate-500">SOC2 compliant, end-to-end encryption, and GDPR ready. Your voice data is safe and strictly confidential.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonial Section -->
+<section class="py-24 bg-slate-50">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid md:grid-cols-2 gap-16 items-center">
+<div>
+<h2 class="text-4xl font-bold font-headline text-slate-900 mb-6 leading-tight">Trusted by teams who value <span class="text-indigo-600">real stories</span>.</h2>
+<p class="text-slate-600 text-lg mb-8">Join over 5,000+ companies using VoiceForm to capture the authentic voice of their customers.</p>
+<div class="flex items-center gap-4">
+<div class="flex -space-x-3">
+<img class="w-12 h-12 rounded-full border-4 border-white object-cover" data-alt="portrait of a professional woman with a friendly smile in a modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4-YlhBVsqUD3puK7P3WAxvYQ0Xzs7pruTs46geiB_nXY1LvtrX5DNhzFLsYfjAtY5O7aM-c1PrWhSJ_PRwa_LSM-S03zRW6UEvr0BAAiXFu3XqcRVtOfiynxpWmr9FmpytIW293LOHXLWfVrScDKSqDqyK70zIZ_1acnMxyLkWKamvMryutbAUAlRDCACK77UH6VIngAUS-G18xq2lRvym8KuIc5JVQZxilhcoC5vVwmA8CNYfy12I59TZ1_CNFoioLqyp8f57Juu"/>
+<img class="w-12 h-12 rounded-full border-4 border-white object-cover" data-alt="portrait of a young businessman in a casual suit against a neutral studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACkciqA8wBPWGC-6HktS8DX9D3DEWxoDCESbAcxWXv-hh0zhtXpf907Pq4cK3ZC-sh9kNve-8iJPhbcegc0rMDszWkPLEDUqUdyNG_r5R1J52hQ3X0NamGnxUG0hilU0XD0g56POvxZvt0xSaCZmrHeRyjiad1paneXNgDxycFlnMwCUzxaTmYehncTf_AGIyQ7LmzHiBajTZomAcCHdKL3pZKUydFpOBrx2tqKyplLpOwqN7_rg2_lZ-EF-at7rOVSn9KTt7xJq7M"/>
+<img class="w-12 h-12 rounded-full border-4 border-white object-cover" data-alt="portrait of a cheerful woman with long dark hair in a bright outdoor urban environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKckvOIk3vp47DEqHe6vsmzzcWLD86x4nDBaz-ezktoeJcPjHydX2lRHTjtbE7tQoJOos9sJnr4vFAz9uI2SHr5ARoOGTa9hjr3gt8xb-wdUO0cLuCVOAWIqDZ4qUDH9cVgySjSuVoj-oh6Qq-WLTklfIZJmMOTC-msxtXnXzS42LTmBYOQgve3bhT8JkfgMxxY-NHGc1LV2Xue3VKuFhAGFQbpEvzlQIVk6KW6sVmfa4pxISZKM8qxi6MWIL3_IJfE6WDmvVBEUff"/>
+</div>
+<div class="text-sm font-semibold text-slate-500">
+<span class="text-slate-900 font-bold">5.0</span> Average rating
+                            </div>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100 rounded-full -z-10"></div>
+<div class="glass-card p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-white">
+<span class="material-symbols-outlined text-indigo-200 text-6xl absolute top-6 right-6" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<p class="text-xl font-medium text-slate-700 italic leading-relaxed mb-8">
+                                "VoiceForm changed the way we conduct user research. We used to get one-word answers; now we get rich, emotional stories that guide our entire product roadmap."
+                            </p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">SJ</div>
+<div>
+<h4 class="font-bold text-slate-900">Sarah Jenkins</h4>
+<p class="text-sm text-slate-500">Head of UX @ FlowFlow</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24">
+<div class="max-w-5xl mx-auto px-6">
+<div class="bg-indigo-600 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+<div class="relative z-10">
+<h2 class="text-4xl md:text-5xl font-bold font-headline text-white mb-6">Ready to hear what your customers are thinking?</h2>
+<p class="text-indigo-100 text-lg mb-10 max-w-2xl mx-auto">Start your 14-day free trial today. No credit card required. Infinite insights guaranteed.</p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+<button class="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-indigo-50 transition-colors">Start Building for Free</button>
+<button class="bg-transparent border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-colors">Book a Demo</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="w-full py-12 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+<div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="flex flex-col gap-4">
+<span class="text-lg font-bold text-slate-900 dark:text-white font-headline">VoiceForm</span>
+<p class="text-slate-500 dark:text-slate-400 font-sans text-sm max-w-xs">Empowering businesses to capture the genuine voice of their audience through AI-driven voice interactions.</p>
+<p class="font-sans text-sm text-slate-500 dark:text-slate-400">© 2024 VoiceForm Inc. All rights reserved.</p>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+<div class="flex flex-col gap-3">
+<h5 class="text-slate-900 dark:text-white font-bold text-sm">Company</h5>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">Privacy Policy</a>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">Terms of Service</a>
+</div>
+<div class="flex flex-col gap-3">
+<h5 class="text-slate-900 dark:text-white font-bold text-sm">Connect</h5>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">Twitter</a>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">LinkedIn</a>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">Contact Us</a>
+</div>
+<div class="hidden sm:flex flex-col gap-3">
+<h5 class="text-slate-900 dark:text-white font-bold text-sm">Resources</h5>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">Documentation</a>
+<a class="text-slate-500 hover:text-indigo-500 font-sans text-sm transition-colors hover:underline" href="#">API Reference</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

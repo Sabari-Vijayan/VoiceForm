@@ -1,67 +1,59 @@
 # VoiceForm: Project Context & Status
 
 ## 1. Project Overview
-**VoiceForm** is a conversational AI form platform that replaces static inputs with voice-driven multilingual interactions.
+**VoiceForm** is a conversational AI form platform that replaces static inputs with voice-driven, human-like, multilingual interactions.
 - **Creator Role:** Describe form → AI generates schema → Public link shared → View Analytics.
-- **Respondent Role:** Open link → Experience form in original or preferred language → Fill via Voice or Manual.
+- **Respondent Role:** Open link → Selection/Preview → High-fidelity Voice Interview or Manual Entry → Review & Submit.
 
-## 2. Current Status (April 6, 2026)
+## 2. Current Status (April 7, 2026)
 
-### **Built Features & Improvements**
-- **AI Engine (Gemini 3 Flash Preview):** 
-  - Token-optimized prompting for high-speed, low-cost generation and translation.
-  - Form generation in any creator-chosen language (Hindi, Malayalam, Spanish, etc.).
-  - Bi-directional translation: On-demand translation for respondents; Auto-normalization back to Creator's language for submissions.
-- **Advanced Analytics Dashboard:**
-  - Real-time KPIs: Completion rate, total sessions, and average AI extraction confidence.
-  - "Completed-Only" view: Filters out abandoned attempts to keep creator data clean.
-  - CSV Export: One-click export of normalized respondent data.
-- **UX & Design:**
-  - **Luxurious Monochrome System:** Consistent styling across desktop and mobile.
-  - **Responsive Engine:** Media-query based utilities for seamless mobile form filling.
-  - **Ease-of-Life:** Click-outside-to-close modals, "Copied!" feedback states, and localized translation loaders.
-- **Backend (FastAPI + Supabase):**
-  - Robust RLS (Row Level Security) policies.
-  - Bulk manual submission endpoint to optimize session handling.
-  - Optimized form fetching (skips AI translation if languages match).
+### **Key Improvements & Features Added**
+- **Bulk Extraction Engine (Optimized for Quota & Speed):**
+  - Shifted from per-question extraction to a single **Bulk Pass** at the end of the interview.
+  - Reduces Gemini API calls by ~80%, resolving `429 Resource Exhausted` errors on free tiers.
+  - Uses `gemini-1.5-flash` for high-throughput NLU.
+- **Human-Centric Voice Interface (Vertex AI Cloud TTS):**
+  - Replaced browser `SpeechSynthesis` with **Google Cloud Studio Voices** (`en-US-Studio-Q`).
+  - Implemented **SSML (Speech Synthesis Markup Language)** to inject natural "breaths" (400ms pauses) and a calm, 90% speaking rate.
+  - Added **"Caring" Persona**: Gemini re-phrases form questions to be warm and conversational during translation.
+  - Added **Conversational Fillers**: Randomized acknowledgments like "Got it!", "Hmm, let's see...", and "Wonderful" between questions.
+- **Robust State Machine & Error Handling:**
+  - Added a **Review & Submit** mode: Users can verify and edit AI-extracted values before final database persistence.
+  - **Live Buffering**: Transcripts are buffered in real-time; if a user switches to "Manual Mode" mid-interview, their spoken answers are pre-filled.
+  - **JSON Resilience**: Backend now includes regex-based cleaning to handle malformed AI responses or extra conversational filler from LLMs.
 
 ### **Tech Stack**
-- **Frontend:** React 19 + Lucide Icons + Vanilla CSS (Responsive).
+- **Frontend:** React 19 + Lucide Icons + Web Speech API (STT) + HTML5 Audio (Cloud TTS).
 - **Backend:** Python 3.12+ + FastAPI + Supabase-py.
-- **AI:** Google Gemini 3 Flash Preview (Optimized System Instructions).
+- **AI/Cloud:** 
+  - **Google Gemini 1.5 Flash**: Bulk entity extraction and form translation.
+  - **Vertex AI Text-to-Speech**: Studio-grade voice synthesis.
+  - **Supabase**: RLS-secured Postgres and Auth.
 
 ---
 
 ## 3. Architecture & Design Choices
-- **Normalization Principle ("Creator Truth"):** Respondents speak/type in their native tongue, but the system normalizes everything back to the **Creator's original language**. This allows a Malayalam creator to understand an English respondent instantly.
-- **Delayed Persistence (Manual Mode):** To avoid "zombie" data, database sessions are not created for manual users until they hit "Submit." This keeps analytics meaningful.
-- **Optimized Prompting:** Instead of verbose instructions, we use shorthand JSON schemas and direct constraints to minimize latency and token costs.
-- **On-Demand Translation:** We don't pre-translate every form. Translation is requested from Gemini only when a respondent selects a different language in the UI.
+- **Delayed Persistence**: Sessions are finalized only after the "Review & Submit" step to ensure high data quality.
+- **Normalization ("Creator Truth")**: All multilingual responses are normalized back to the Creator's language during the Bulk Extraction pass.
+- **SSML Layer**: Direct text-to-speech is wrapped in SSML `<prosody>` and `<break>` tags to solve the "robotic" tone issue.
 
 ---
 
-## 4. Remaining P0 Tasks
+## 4. Remaining P0/P1 Tasks
 
-### **Task 1: The Voice Loop (CRITICAL)**
-Implement the core conversational state machine.
-- **Location:** `client/src/hooks/useVoiceSession.js`
-- **Logic:**
-  1. **TTS:** Use `window.speechSynthesis` to read the current field's `question_phrasing`.
-  2. **STT:** Use `window.SpeechRecognition` to capture the respondent's spoken answer.
-  3. **Refine:** Send transcript to `/api/v1/public/extract` (passing `form_id` for correct language normalization).
-  4. **State:** Move to the next index upon successful extraction.
-  5. **Completion:** Mark session as `completed` in Supabase.
+### **Task 1: AI Summary (P0)**
+Implement the "AI Insights" panel in the Creator Dashboard to summarize trends across all responses.
 
-### **Task 2: AI Summary Feature**
-Enhance the Analytics page with an "AI Insights" panel.
-- **Logic:** Fetch all responses for a form, send them to Gemini with a "Summarize trends" prompt, and display key takeaways for the creator.
+### **Task 2: Audio Archiving (P1)**
+Store raw base64 audio fragments in Supabase Storage for the creator to hear the "emotion" behind the text.
 
-### **Task 3: Error Recovery (Confidence Check)**
-- If extraction confidence is < 0.7, trigger a "Confirmation Loop" where the AI asks: "Just to confirm, did you mean [X]?"
+### **Task 3: Voice Form Creation (P1)**
+Allow creators to describe their form via voice instead of typing the prompt.
 
 ---
 
 ## 5. How to Run
-1.  **Backend:** `cd server && ./run.sh` (Requires `.env` with Gemini & Supabase keys).
+1.  **Backend:** `cd server && ./run.sh`. 
+    - Requires `.env` (Gemini/Supabase) AND `gcp-key.json` (Service Account for TTS).
+    - Ensure `GOOGLE_APPLICATION_CREDENTIALS` points to the key.
 2.  **Frontend:** `cd client && npm run dev`.
-3.  **Supabase:** Schema defined in `supabase/migrations/01_initial_schema.sql`.
