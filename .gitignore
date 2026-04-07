@@ -1,7 +1,7 @@
 .env
 client/.env
 server/.env
-server/gcp-key.json
+server/gcp-key1.json
 node_modules/
 dist/
 __pycache__/
