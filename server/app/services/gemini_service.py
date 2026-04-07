@@ -8,7 +8,7 @@ class GeminiService:
     def __init__(self):
         settings = get_settings()
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        self.model_id = 'gemini-3-flash-preview'
+        self.model_id = 'gemini-3.1-flash-lite-preview'
 
     async def generate_form_schema(self, prompt: str, language: str = 'en') -> Dict[str, Any]:
         """
