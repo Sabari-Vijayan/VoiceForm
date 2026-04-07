@@ -28,14 +28,16 @@ const HomePage = () => {
               to="/register" 
               className="btn-bouncy bg-primary text-white px-12 py-6 rounded-full text-xl font-bold shadow-2xl shadow-primary/20 flex items-center gap-4"
             >
-              Try it now
+              Get Started
               <ArrowRight size={22} />
             </Link>
             
-            <div className="flex items-center gap-6 px-8 py-5 glass-card rounded-2xl">
-              <Waveform />
-              <span className="text-sm font-semibold text-slate-500 uppercase tracking-widest">Listening...</span>
-            </div>
+            <Link 
+              to="/login" 
+              className="btn-bouncy bg-white text-primary border-2 border-primary/10 px-12 py-6 rounded-full text-xl font-bold shadow-xl shadow-slate-200/50 hover:bg-primary/5 transition-all"
+            >
+              Log In
+            </Link>
           </div>
         </div>
 

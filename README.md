@@ -1,110 +1,97 @@
 # VoiceForm 🎙️
 
-**VoiceForm** is a conversational, multilingual AI form platform that transforms traditional static forms into dynamic, voice-driven conversations. Instead of clicking through fields, respondents speak naturally in their native language, while our AI listens, understands, and extracts structured data.
+## Problem Statement
+Traditional static forms are high-friction and exclusionary. Millions of users—especially in non-English speaking regions—struggle with typing, small touch-targets, and foreign languages. This leads to high abandonment rates and poor data quality. For businesses, capturing the "true voice" and emotion of a customer is impossible through a radio button.
 
-Built for accessibility and high-quality data collection, VoiceForm removes the friction of typing, especially for users who prefer native languages over English.
+## Project Description
+**VoiceForm** is a conversational, multilingual AI platform that transforms forms into natural human interactions. 
 
----
-
-## ✨ Core Features
-
-### 🛠️ For Creators
-- **AI Form Generation**: Describe your form goal in plain English (e.g., "Customer satisfaction survey for a cafe"), and Gemini generates the optimal field schema instantly.
-- **Multilingual Support**: Generate and translate forms into English, Hindi, Malayalam, and Spanish.
-- **Insightful Dashboard**: View collected responses with AI-generated sentiment analysis and summaries.
-- **Secure Auth**: Creator accounts managed via Supabase Auth.
-
-### 🗣️ For Respondents
-- **Voice-First UI**: Complete forms through a natural conversation. No typing required.
-- **Real-time Feedback**: Hear questions via Text-to-Speech (TTS) and see live transcriptions via Speech-to-Text (STT).
-- **Intelligent Extraction**: Gemini extracts normalized values (names, numbers, dates) from freeform speech.
-- **Empathetic Interaction**: A warm, human-like personality designed to make respondents feel heard.
+**How it works:**
+1. **AI Generation**: Creators describe their goal (e.g., "Post-surgery patient check-in"). Gemini generates a clinical-grade field schema.
+2. **Empathetic Voice Loop**: Respondents don't "fill" the form; they talk to it. The system uses Text-to-Speech to ask questions and Speech-to-Text to listen.
+3. **Intent Extraction**: Gemini processes the raw transcript to extract structured data (e.g., extracting "I feel a bit of a sharp pain in my lower back" as `severity: moderate`, `location: lower_back`).
+4. **Insight Dashboard**: Responses are automatically translated back to the creator's language and summarized using AI sentiment analysis.
 
 ---
 
-## 🚀 Tech Stack
+## Google AI Usage
+### Tools / Models Used
+- **Gemini 3.1 Flash Lite Preview (Gemini API)**: Our primary engine for reasoning, clinical-grade schema generation, and high-accuracy multilingual data extraction.
+- **Vertex AI Text-to-Speech (Studio & Neural2)**: Powering our empathetic personality with ultra-high-fidelity voices (specifically the `en-US-Studio-Q` model) and SSML-driven speech patterns for natural pauses.
+- **Gemini CLI (Coding Agent)**: Used throughout the development process for rapid prototyping, complex UI refactoring, and backend orchestration.
+- **Web Speech API**: Client-side Speech-to-Text for real-time transcription.
 
-### Frontend
-- **React (Vite)**: Modern, fast UI development.
-- **Tailwind CSS (v4)**: High-end, "breathable" design with glassmorphism.
-- **Web Speech API**: Client-side Speech-to-Text and Text-to-Speech.
-- **Lucide React**: Beautiful, consistent iconography.
-
-### Backend
-- **FastAPI (Python)**: High-performance asynchronous API layer.
-- **Gemini API (`gemini-3.1-flash-lite-preview`)**: Powers form generation and bulk data extraction.
-- **Supabase**: Managed Postgres database, Auth, and Storage.
+### How Google AI Was Used
+AI is the heartbeat of VoiceForm, integrated across the entire lifecycle:
+- **Zero-Config Form Building**: Using the **Gemini 3.1 Flash Lite** model via the `google-genai` SDK, VoiceForm acts as a senior UX researcher, designing validated question flows from a single sentence.
+- **Natural Language Understanding**: We leverage Gemini's large context window and reasoning to "read" spoken transcripts. It extracts structured fields even when users correct themselves mid-sentence.
+- **Empathetic Interaction Design**: Using **Vertex AI TTS** with SSML markup, we've designed a "breath-aware" speaking model. The AI adds a 400ms pause after acknowledgments to simulate active listening.
+- **Multilingual Transformation**: Gemini handles the complex task of translating forms into Hindi, Malayalam, and Spanish while preserving the "warm and caring" tone instructed in its system prompt.
+- **Accelerated Development**: The entire frontend refactor and backend logic were orchestrated using the **Gemini CLI**, enabling us to build a production-grade prototype in record time during the hackathon.
 
 ---
 
-## 📂 Project Structure
+## Proof of Google AI Usage
+The following screenshots demonstrate the integration of Gemini 3.1 Flash Lite for schema generation and data extraction:
 
-```text
-VoiceForm/
-├── client/           # React frontend (Vite)
-│   ├── src/
-│   │   ├── components/  # Reusable UI (VoiceOrb, Waveform, etc.)
-│   │   ├── contexts/    # Auth and Global State
-│   │   ├── hooks/       # Voice session logic
-│   │   └── pages/       # Dashboard, Home, Respondent View
-├── server/           # FastAPI backend
-│   ├── app/
-│   │   ├── api/         # V1 API Routes
-│   │   ├── services/    # Gemini and Supabase logic
-│   │   └── models/      # Pydantic schemas
-├── supabase/         # Database migrations and seed data
-└── GEMINI.md         # Project context and rules
+![AI Proof](./screenshots/ai-proof.png)
+
+---
+
+## Screenshots 
+![Hero Page](./screenshots/hero.png)  
+![Respondent View](./screenshots/responder.png)
+![Dashboard](./screenshots/dashboard.png)
+
+---
+
+## Demo Video
+[Watch Demo](https://drive.google.com/file/d/your-shared-link-here)
+Link : https://drive.google.com/file/d/1cjCV6NJT1eD8URbJc6h5PvgtrXiUxfo3/view?usp=drive_link
+---
+
+## Configuration
+
+The project requires environment variables for both the backend and frontend. You can find templates in the `.env.example` files within each directory.
+
+### Backend (`server/.env`)
+Create a `.env` file in the `server` directory:
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_anon_key
+GEMINI_API_KEY=your_gemini_api_key
+PORT=8000
+gcp-key=YOUR_VERTEX_AI_TTS_CREDENTIALS # Path to your GCP JSON key file
+```
+
+### Frontend (`client/.env`)
+Create a `.env` file in the `client` directory:
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_BACKEND_URL=http://localhost:8000
 ```
 
 ---
 
-## 🛠️ Setup & Installation
+## Installation Steps
 
-### Prerequisites
-- Node.js (v18+)
-- Python 3.9+
-- Supabase Account
-- Google Gemini API Key
-
-### 1. Database Setup
-1. Create a new Supabase project.
-2. Run the SQL in `supabase/migrations/01_initial_schema.sql` in your Supabase SQL Editor.
-
-### 2. Backend Setup
 ```bash
+# Clone the repository
+git clone https://github.com/Sabari-Vijayan/VoiceForm.git
+
+# Go to project folder
+cd VoiceForm
+
+# Setup Backend (FastAPI)
 cd server
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-# Fill in your GEMINI_API_KEY and SUPABASE details
 ./run.sh
-```
 
-### 3. Frontend Setup
-```bash
-cd client
+# Setup Frontend (React + Vite)
+cd ../client
 npm install
-cp .env.example .env
-# Fill in your VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_BACKEND_URL
 npm run dev
 ```
-
----
-
-## 🎯 Hackathon Focus (P0)
-- [x] Creator Sign-up/Login (Supabase).
-- [x] AI Form Generation from text prompt.
-- [x] Voice-based form filling loop.
-- [x] Multilingual support (EN, HI, ML, ES).
-- [x] Structured data extraction from speech.
-- [x] Response dashboard & AI summaries.
-
----
-
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Built with ❤️ for the AI Hackathon.

@@ -141,13 +141,16 @@ class GeminiService:
         except Exception as e:
             print(f"Bulk Extraction Error: {e}")
             raise e
+
+    async def translate_manual_responses(self, responses: Dict[str, Any], source_lang: str, target_lang: str) -> Dict[str, Any]:
         """
-        Translates response values. Optimized for tokens.
+        Translates manual response values from one language to another.
         """
         lang_map = {"en": "English", "hi": "Hindi", "ml": "Malayalam", "es": "Spanish"}
-        T = lang_map.get(target_lang, "English")
+        T = lang_map.get(target_lang, target_lang)
+        S = lang_map.get(source_lang, source_lang)
 
-        sys = f"Translate JSON values to {T}. Keep keys."
+        sys = f"Translate the values in the following JSON object from {S} to {T}. Keep the keys exactly as they are. Return ONLY the JSON object."
 
         try:
             response = self.client.models.generate_content(
@@ -157,6 +160,7 @@ class GeminiService:
             )
             return json.loads(response.text)
         except Exception as e:
+            print(f"Translation Error: {e}")
             return responses
 
 # Instantiate as a singleton

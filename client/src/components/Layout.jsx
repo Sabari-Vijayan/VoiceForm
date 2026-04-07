@@ -33,18 +33,20 @@ const Layout = ({ children, hideNav = false, hideFooter = false }) => {
             <div className="flex items-center gap-6">
               {user ? (
                 <div className="flex items-center gap-6">
-                  <span className="text-sm text-slate-500 font-medium hidden sm:inline">{user.email}</span>
-                  <button onClick={handleLogout} className="text-slate-600 hover:text-primary p-2.5 rounded-full hover:bg-slate-100 transition-all">
+                  <span className="text-sm text-slate-500 font-bold hidden sm:inline">{user.email}</span>
+                  <button onClick={handleLogout} className="text-slate-600 hover:text-primary p-2.5 rounded-full hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200">
                     <LogOut size={22} />
                   </button>
                 </div>
               ) : (
-                <>
-                  <Link to="/login" className="text-primary font-bold hover:opacity-80 transition-opacity">Log In</Link>
-                  <Link to="/register" className="bg-primary text-white px-7 py-3 rounded-full text-sm font-bold btn-bouncy shadow-xl shadow-primary/20">
+                <div className="flex items-center gap-6">
+                  <Link to="/login" className="text-slate-600 font-black text-xs uppercase tracking-widest hover:text-primary transition-colors">
+                    Sign In
+                  </Link>
+                  <Link to="/register" className="bg-primary text-white px-8 py-3.5 rounded-full text-xs font-black uppercase tracking-widest btn-bouncy shadow-2xl shadow-primary/30">
                     Get Started
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </div>
